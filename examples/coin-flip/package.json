@@ -1,0 +1,19 @@
+{
+  "name": "near-sdk-as-example-coin-flip",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "near-as build contract.ts --out build/contract.wasm",
+    "test:wasm": "node --test wasm.test.mjs",
+    "test:sandbox": "node --test sandbox.test.mjs",
+    "test": "npm run build && npm run test:wasm && npm run test:sandbox"
+  },
+  "dependencies": { "near-sdk-as": "0.1.0-alpha.0" },
+  "devDependencies": {
+    "assemblyscript": "0.28.19",
+    "near-api-js": "7.2.0",
+    "near-sandbox": "^0.3.0"
+  },
+  "engines": { "node": ">=22.22.2" }
+}

@@ -1,51 +1,118 @@
 # near-sdk-as
 
-Collection of packages used in developing NEAR smart contracts in AssemblyScript including:
+An experimental, contract-first AssemblyScript SDK for NEAR.
 
+The examples progress from Hello NEAR through an NFT contract, with one root
+state object, generated JSON bindings, and tests against `near-sandbox`.
 
-- [`runtime library`](https://github.com/near/near-sdk-as/tree/master/sdk-core) - AssemblyScript near runtime library
-- [`bindgen`](https://github.com/near/near-sdk-as/tree/master/bindgen) - AssemblyScript transformer that adds the bindings needed to (de)serialize input and outputs.
-- [`near-mock-vm`](https://github.com/near/near-sdk-as/tree/master/near-mock-vm) - Core of the NEAR VM compiled to WebAssembly used for running unit tests.
-- [`@as-pect/cli`](https://github.com/jtenner/as-pect) - AssemblyScript testing framework similar to jest.
+## Contract model
 
-## To Install
+```ts
+import { near } from "near-sdk-as";
 
-```sh
-yarn add -D near-sdk-as
-```
+@contract_state
+export class State {
+  greeting: string = "Hello";
+}
 
-## Project Setup
+@view
+export function get_greeting(): string {
+  return state.greeting;
+}
 
-To set up a AS project to compile with the sdk add the following `asconfig.json` file to the root:
-
-```json
-{
-  "extends": "near-sdk-as/asconfig.json"
+@call
+export function set_greeting(greeting: string): void {
+  near.log("Saving greeting: " + greeting);
+  state.greeting = greeting;
 }
 ```
 
-Then if your main file is `assembly/index.ts`, then the project can be build with [`asbuild`](https://github.com/willemneal/asbuild):
+There must be exactly one `@contract_state` class. The build generates the typed
+global `state` value and stores it under one fixed internal key.
 
-```sh
-yarn asb
+- Missing state is initialized with `new State()`.
+- `@view` functions never persist state.
+- A successful `@call` persists state once, after the function returns.
+- `@init` persists the initial state and fails if state already exists.
+- `@json` types can be used for structured values and nested state fields.
+- Endpoint parameters become fields in NEAR's JSON argument object; the generated
+  binding handles that envelope.
+
+The generated AssemblyScript remains inspectable in `.near/generated-entry.ts`
+and beside the contract as `*.near.generated.ts`.
+
+## Scalable collections
+
+Use ordinary arrays and objects for small state. For data that can grow, import
+the collection namespace and make it an explicit `@contract_state` field:
+
+```ts
+import { U128 } from "near-sdk-as";
+import * as collections from "near-sdk-as";
+
+@contract_state
+export class State {
+  balances: collections.LookupMap<string, U128> =
+    new collections.LookupMap<string, U128>();
+  messages: collections.Vector<Message> = new collections.Vector<Message>();
+}
 ```
 
-will create a release build and place it `./build/release/<name-in-package.json>.wasm`
+The compiler derives each collection's storage namespace from its state
+field, so users never supply prefixes or coordinate global storage names.
+Collection entries are stored separately from the root contract object; a
+single `balances.set(...)` does not rewrite every balance.
+
+- `LookupMap` and `LookupSet` provide scalable non-iterable lookup.
+- `IterableMap` and `IterableSet` provide explicit paginated `keys`, `values`,
+  and `entries` access. Their iteration order may change after deletion.
+- `Vector` provides indexed, paginated storage.
+- `Deferred` and `LazyOption` store one separately loaded required or optional
+  value.
+
+All collections use `get(key, fallback)` plus `getSome(key)` rather than a
+generic nullable return, because AssemblyScript numeric types cannot be null.
+Do not rename a collection field after deployment without a storage migration:
+the field name is its stable namespace.
+
+`@json` values may contain any nested ordinary structures. A scalable
+collection may not contain another scalable collection: an inner collection
+would need its own per-entry namespace, so the compiler rejects that shape
+until there is a deliberate design for it.
+
+## Build and test
 
 ```sh
-yarn asb --target debug
+npm install
+npm run build
+npm test
 ```
 
-will create a debug build and place it in `./build/debug/..`
+`npm test` uses the Node test runner for compiler checks and `near-sandbox` for
+the deployment/state round-trip. Each example keeps its Wasm and Sandbox tests
+beside its contract. `near-api-js` is used only to submit the Wasm and
+transactions to the Sandbox RPC endpoint; there is no mock VM or simulator.
 
-## Testing
+Every directory under `examples/` is also a standalone npm project. Copy one
+to a new repository and run `npm install && npm test`; its README and scripts
+include any auxiliary contracts it needs.
 
-### Unit Testing
+## Example progression
 
-See the [sdk's as-pect tests for an example](./sdk/assembly/__tests__) of creating unit tests.  Must be ending in `.spec.ts` in a `assembly/__tests__`.
+Functionality will be added only when required by these examples:
 
-## License
+1. Hello NEAR ✓
+2. Counter ✓
+3. Guest book ✓
+4. Donation ✓
+5. Coin flip ✓
+6. Simple cross-contract call ✓
+7. Advanced cross-contract call ✓
+8. Factory (ordinary contract deployment) ✓
+9. Collections and nested values ✓
+10. NFT (core, approval, enumeration, and transfer-call) ✓
 
-`near-sdk-as` is distributed under the terms of both the MIT license and the Apache License (Version 2.0).
+Each port preserves the upstream Rust and TypeScript test scenarios where they
+exist. Additional compiler and `near-sandbox` integration tests extend that baseline.
 
-See [LICENSE-MIT](LICENSE-MIT) and [LICENSE-APACHE](LICENSE-APACHE) for details.
+The old implementation remains in `old-sdk/` only as a parity reference.

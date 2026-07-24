@@ -1,61 +1,54 @@
 {
   "name": "near-sdk-as",
-  "version": "1.2.1",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com:near/near-sdk-as"
+  "version": "0.1.0-alpha.0",
+  "description": "A small AssemblyScript SDK for NEAR contracts",
+  "type": "module",
+  "types": "src/index.ts",
+  "ascMain": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
   },
-  "author": "Willem Wyndham <willem@nearprotocol.com>",
-  "license": "(MIT AND Apache-2.0)",
+  "bin": {
+    "near-as": "bin/near-as.mjs"
+  },
+  "files": [
+    "asconfig.json",
+    "bin",
+    "compiler",
+    "index.ts",
+    "src"
+  ],
   "scripts": {
-    "build": "yarn workspaces run build",
-    "build:vm": "yarn workspace near-mock-vm run build:wasm",
-    "test": "yarn workspaces run test && yarn check:all",
-    "doc": "rm -rf docs; node docs.js && touch docs/.nojekyll",
-    "prettify": "prettier --write \"**/src/**/*.ts\"",
-    "lint": "eslint --max-warnings 0 --ext ts \"*/assembly/**/*.ts\"",
-    "check:pretty": "prettier --check \"**/src/**/*.ts\"",
-    "check:all": "yarn lint && yarn check:pretty",
-    "fix:all": "yarn lint --fix && yarn prettify",
-    "precommit": "yarn check:all || yarn fix:all && exit 1"
-  },
-  "devDependencies": {
-    "@types/jest": "^26.0.0",
-    "@types/js-base64": "^3.0.0",
-    "@types/node": "^14.6.2",
-    "@typescript-eslint/eslint-plugin": "^4.5.0",
-    "@typescript-eslint/parser": "^4.5.0",
-    "eslint": "^7.14.0",
-    "husky": "^4.2.5",
-    "jest": "^26.4.2",
-    "lerna": "^3.22.1",
-    "lint-staged": "^10.5.4",
-    "prettier": "^2.1.1",
-    "ts-jest": "^26.3.0"
+    "build": "npm run build:hello && npm run build:counters && npm run build:collections && npm run build:guest-book && npm run build:donation && npm run build:coin-flip && npm run build:cross-contract-simple && npm run build:cross-contract-advanced && npm run build:factory && npm run build:nft",
+    "build:hello": "node bin/near-as.mjs build examples/hello-near/contract.ts --out examples/hello-near/build/contract.wasm --sdk src/index.ts",
+    "build:counters": "node bin/near-as.mjs build examples/counters/contract.ts --out examples/counters/build/contract.wasm --sdk src/index.ts",
+    "build:collections": "node bin/near-as.mjs build examples/collections/contract.ts --out examples/collections/build/contract.wasm --sdk src/index.ts",
+    "build:guest-book": "node bin/near-as.mjs build examples/guest-book/contract.ts --out examples/guest-book/build/contract.wasm --sdk src/index.ts",
+    "build:donation": "node bin/near-as.mjs build examples/donation/contract.ts --out examples/donation/build/contract.wasm --sdk src/index.ts",
+    "build:coin-flip": "node bin/near-as.mjs build examples/coin-flip/contract.ts --out examples/coin-flip/build/contract.wasm --sdk src/index.ts",
+    "build:cross-contract-simple": "node bin/near-as.mjs build examples/cross-contract-simple/test-contracts/hello-near/contract.ts --out examples/cross-contract-simple/test-contracts/hello-near/build/contract.wasm --sdk src/index.ts && node bin/near-as.mjs build examples/cross-contract-simple/contract.ts --out examples/cross-contract-simple/build/contract.wasm --sdk src/index.ts",
+    "build:cross-contract-advanced": "node bin/near-as.mjs build examples/cross-contract-advanced/test-contracts/hello-near/contract.ts --out examples/cross-contract-advanced/test-contracts/hello-near/build/contract.wasm --sdk src/index.ts && node bin/near-as.mjs build examples/cross-contract-advanced/test-contracts/counters/contract.ts --out examples/cross-contract-advanced/test-contracts/counters/build/contract.wasm --sdk src/index.ts && node bin/near-as.mjs build examples/cross-contract-advanced/test-contracts/guest-book/contract.ts --out examples/cross-contract-advanced/test-contracts/guest-book/build/contract.wasm --sdk src/index.ts && node bin/near-as.mjs build examples/cross-contract-advanced/contract.ts --out examples/cross-contract-advanced/build/contract.wasm --sdk src/index.ts",
+    "build:factory-token": "node bin/near-as.mjs build examples/factory/token/contract.ts --out examples/factory/token/build/contract.wasm --sdk src/index.ts",
+    "build:factory": "npm run build:factory-token && node bin/near-as.mjs build examples/factory/contract.ts --out examples/factory/build/contract.wasm --sdk src/index.ts",
+    "build:nft": "node bin/near-as.mjs build examples/nft/test-contracts/token-receiver/contract.ts --out examples/nft/test-contracts/token-receiver/build/contract.wasm --sdk src/index.ts && node bin/near-as.mjs build examples/nft/src/lib.ts --out examples/nft/build/contract.wasm --sdk src/index.ts",
+    "test": "npm run test:compiler && npm run test:contract && npm run test:sandbox",
+    "test:compiler": "node --test compiler/endpoints.test.mjs",
+    "test:contract": "npm run build && node --test examples/*/wasm.test.mjs",
+    "test:sandbox": "npm run build && node --test examples/*/sandbox.test.mjs"
   },
   "engines": {
-    "node": ">=12.0.0"
+    "node": ">=22.22.2"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
+  "dependencies": {
+    "assemblyscript": "0.28.19",
+    "json-as": "1.5.0"
   },
-  "lint-staged": {
-    "*/assembly/**/*.ts": [
-      "eslint --ext ts --fix", "eslint --max-warnings 0 --ext ts"
-    ],
-    "**/src/**/*.ts": [
-      "prettier --write", "prettier --check"
-    ]
+  "devDependencies": {
+    "near-api-js": "7.2.0",
+    "near-sandbox": "^0.3.0"
   },
-  "private": true,
-  "workspaces": [
-    "bindgen",
-    "sdk",
-    "sdk-core",
-    "simulator",
-    "nearcore-tests",
-    "near-mock-vm"
-  ]
+  "overrides": {
+    "tar": "7.5.19"
+  },
+  "license": "(MIT OR Apache-2.0)"
 }

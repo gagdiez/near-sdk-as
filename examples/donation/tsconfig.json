@@ -3,5 +3,5 @@
   "compilerOptions": {
     "noEmit": true
   },
-  "include": ["index.ts", "src/**/*.ts"]
+  "include": ["contract.ts", "near-globals.d.ts"]
 }
