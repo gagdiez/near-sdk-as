@@ -1,0 +1,1 @@
+{ "targets": { "release": { "outFile": "build/contract.wasm", "optimizeLevel": 3, "shrinkLevel": 2 } } }

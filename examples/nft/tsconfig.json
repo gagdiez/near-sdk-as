@@ -1,0 +1,1 @@
+{ "extends": "assemblyscript/std/assembly.json", "compilerOptions": { "noEmit": true }, "include": ["src/**/*.ts", "near-globals.d.ts"] }
