@@ -49,11 +49,11 @@ class InitializeArgs {
 @json
 class CallbackArgs {
   user: string = "";
-  deposit: string = "0";
+  deposit: NearToken = NearToken.zero();
 
   constructor(user: string = "", deposit: NearToken = NearToken.zero()) {
     this.user = user;
-    this.deposit = deposit.toString();
+    this.deposit = deposit;
   }
 }
 

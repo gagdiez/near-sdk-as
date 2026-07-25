@@ -47,13 +47,13 @@ Use ordinary arrays and objects for small state. For data that can grow, import
 the collection namespace and make it an explicit `@contract_state` field:
 
 ```ts
-import { U128 } from "near-sdk-as";
+import { NearToken } from "near-sdk-as";
 import * as collections from "near-sdk-as";
 
 @contract_state
 export class State {
-  balances: collections.LookupMap<string, U128> =
-    new collections.LookupMap<string, U128>();
+  balances: collections.LookupMap<string, NearToken> =
+    new collections.LookupMap<string, NearToken>();
   messages: collections.Vector<Message> = new collections.Vector<Message>();
 }
 ```

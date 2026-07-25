@@ -14,19 +14,11 @@ export class Donation {
 @json
 export class DonationRecord {
   account_id: string = "";
-  total_amount: string = "0";
+  total_amount: NearToken = NearToken.zero();
 
   constructor(account_id: string = "", amount: NearToken = NearToken.zero()) {
     this.account_id = account_id;
-    this.total_amount = amount.asYoctoNear();
-  }
-
-  amount(): NearToken {
-    return NearToken.fromYoctoNear(this.total_amount);
-  }
-
-  setAmount(amount: NearToken): void {
-    this.total_amount = amount.asYoctoNear();
+    this.total_amount = amount;
   }
 }
 
@@ -55,7 +47,7 @@ function donationIndex(accountId: string): i32 {
 }
 
 function donationView(record: DonationRecord): Donation {
-  return new Donation(record.account_id, record.amount().toString());
+  return new Donation(record.account_id, record.total_amount.toString());
 }
 
 @init
@@ -90,14 +82,14 @@ export function donate(): string {
   const index = donationIndex(donor);
   const previous = index < 0
     ? NearToken.zero()
-    : state.donations[index].amount();
+    : state.donations[index].total_amount;
   const total = previous.saturatingAdd(donationAmount);
   const toTransfer = index < 0
     ? donationAmount.saturatingSub(storageCost)
     : donationAmount;
 
   if (index < 0) state.donations.push(new DonationRecord(donor, total));
-  else state.donations[index].setAmount(total);
+  else state.donations[index].total_amount = total;
 
   near.log(
     "Thank you " + donor + " for donating " + donationAmount.toString() +
