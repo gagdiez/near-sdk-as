@@ -16,10 +16,11 @@
     "bin",
     "compiler",
     "index.ts",
+    "patches",
     "src"
   ],
   "scripts": {
-    "build": "npm run build:hello && npm run build:counters && npm run build:collections && npm run build:guest-book && npm run build:donation && npm run build:coin-flip && npm run build:cross-contract-simple && npm run build:cross-contract-advanced && npm run build:factory && npm run build:nft",
+    "build": "npm run build:hello && npm run build:counters && npm run build:collections && npm run build:guest-book && npm run build:donation && npm run build:coin-flip && npm run build:cross-contract-simple && npm run build:cross-contract-advanced && npm run build:factory && npm run build:nft && npm run build:basic-auction",
     "build:hello": "node bin/near-as.mjs build examples/hello-near/contract.ts --out examples/hello-near/build/contract.wasm --sdk src/index.ts",
     "build:counters": "node bin/near-as.mjs build examples/counters/contract.ts --out examples/counters/build/contract.wasm --sdk src/index.ts",
     "build:collections": "node bin/near-as.mjs build examples/collections/contract.ts --out examples/collections/build/contract.wasm --sdk src/index.ts",
@@ -31,17 +32,20 @@
     "build:factory-token": "node bin/near-as.mjs build examples/factory/token/contract.ts --out examples/factory/token/build/contract.wasm --sdk src/index.ts",
     "build:factory": "npm run build:factory-token && node bin/near-as.mjs build examples/factory/contract.ts --out examples/factory/build/contract.wasm --sdk src/index.ts",
     "build:nft": "node bin/near-as.mjs build examples/nft/test-contracts/token-receiver/contract.ts --out examples/nft/test-contracts/token-receiver/build/contract.wasm --sdk src/index.ts && node bin/near-as.mjs build examples/nft/src/lib.ts --out examples/nft/build/contract.wasm --sdk src/index.ts",
+    "build:basic-auction": "node bin/near-as.mjs build examples/basic-auction/contract.ts --out examples/basic-auction/build/contract.wasm --sdk src/index.ts",
     "test": "npm run test:compiler && npm run test:contract && npm run test:sandbox",
     "test:compiler": "node --test compiler/endpoints.test.mjs",
     "test:contract": "npm run build && node --test examples/*/wasm.test.mjs",
-    "test:sandbox": "npm run build && node --test examples/*/sandbox.test.mjs"
+    "test:sandbox": "npm run build && node --test examples/*/sandbox.test.mjs",
+    "postinstall": "patch-package"
   },
   "engines": {
     "node": ">=22.22.2"
   },
   "dependencies": {
     "assemblyscript": "0.28.19",
-    "json-as": "1.5.0"
+    "json-as": "1.5.0",
+    "patch-package": "^8.0.0"
   },
   "devDependencies": {
     "near-api-js": "7.2.0",
