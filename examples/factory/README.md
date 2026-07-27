@@ -28,8 +28,7 @@ The resulting contract is written to `build/contract.wasm`.
 
 ## Project files
 
-- `contract.ts` — contract source
-- `near-globals.d.ts` — editor declarations for SDK decorators and `state`
-- `wasm.test.mjs` — Wasm interface checks
-- `sandbox.test.mjs` — end-to-end sandbox tests
-
+- `src/contract.ts` — factory contract source
+- `token/src/contract.ts` — child-token contract source
+- `test/wasm.test.mjs` — Wasm interface checks
+- `test/sandbox.test.mjs` — end-to-end sandbox tests

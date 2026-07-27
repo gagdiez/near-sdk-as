@@ -1,13 +1,7 @@
-import { JSON, NearToken, near } from "near-sdk-as";
+import { JSON, near } from "near-sdk-as";
 import { transferEvent } from "./events";
 import { Approval, JsonToken, OwnerTokens, Token, TokenId, TokenMetadata } from "./metadata";
 import { state } from "./lib.near.generated";
-
-const ONE_YOCTO = NearToken.fromYoctoNear("1");
-
-export function assertOneYocto(): void {
-  assert(near.attachedDeposit().toString() == ONE_YOCTO.toString(), "Requires attached deposit of exactly 1 yoctoNEAR");
-}
 
 export function assertAtLeastOneYocto(): void {
   assert(!near.attachedDeposit().isZero(), "Requires attached deposit of at least 1 yoctoNEAR");

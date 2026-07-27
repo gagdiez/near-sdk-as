@@ -1,5 +1,1 @@
-{
-  "extends": "assemblyscript/std/assembly.json",
-  "compilerOptions": { "noEmit": true },
-  "include": ["contract.ts", "near-globals.d.ts"]
-}
+{ "extends": "assemblyscript/std/assembly.json", "compilerOptions": { "noEmit": true, "types": ["assembly", "near-sdk-as/globals"] }, "include": ["src/**/*.ts"] }

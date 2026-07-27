@@ -1,4 +1,5 @@
 export { JSON } from "json-as";
+export * from "./account-id";
 export * from "./embed";
 export * from "./gas";
 export * from "./near";

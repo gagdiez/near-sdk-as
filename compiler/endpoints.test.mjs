@@ -140,6 +140,19 @@ test("imports SDK value types from the SDK", () => {
   assert.match(mintEntry, /__readInput,\n  U128,/);
   assert.match(mintEntry, /amount!: string/);
   assert.match(mintEntry, /__mint\(U128\.fromString\(args\.amount\)\)/);
+
+  const [storageDeposit] = discoverEndpoints(
+    "@call export function storage_deposit(account_id: AccountId | null = null): void {}",
+  );
+  const storageDepositEntry = generateEntry({
+    sourceImport: "../contract",
+    sdkImport: "near-sdk-as",
+    endpoints: [storageDeposit],
+  });
+  assert.match(storageDepositEntry, /__readInput,\n  AccountId,/);
+  assert.doesNotMatch(storageDepositEntry, /storage_deposit as __storage_deposit,\n  AccountId,/);
+  assert.match(storageDepositEntry, /account_id: string \| null = null/);
+  assert.match(storageDepositEntry, /__storage_deposit\(args\.account_id == null \? null : AccountId\.fromString\(args\.account_id!\)\)/);
 });
 
 test("returns U128 values as NEAR JSON decimal strings", () => {

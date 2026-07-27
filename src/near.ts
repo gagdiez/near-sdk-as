@@ -7,10 +7,19 @@ import { PublicKey } from "./public-key";
 
 const CONTEXT_REGISTER: u64 = 1;
 const HASH_REGISTER: u64 = 2;
+const ONE_YOCTO = NearToken.fromYoctoNear("1");
 
 function readAccount(load: (registerId: u64) => void): string {
   load(CONTEXT_REGISTER);
   return fromBytes(readRegister(CONTEXT_REGISTER)!);
+}
+
+/** Requires exactly one yoctoNEAR, the standard authorization deposit. */
+export function assertOneYocto(): void {
+  assert(
+    near.attachedDeposit().toString() == ONE_YOCTO.toString(),
+    "Requires attached deposit of exactly 1 yoctoNEAR",
+  );
 }
 
 export namespace near {

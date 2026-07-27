@@ -222,7 +222,7 @@ export function generateEntry({ sourceImport, sdkImport, endpoints }) {
   for (const endpoint of endpoints) {
     for (const parameter of endpoint.parameters) {
       const root = /^([A-Za-z_$][\w$]*)/.exec(parameter.type)?.[1];
-      if (root === "NearToken" || root === "U128" || root === "Gas" || root === "JSON") {
+      if (root === "AccountId" || root === "NearToken" || root === "U128" || root === "Gas" || root === "JSON") {
         sdkParameterTypes.add(root);
       }
       else if (root && !builtinTypes.has(root)) parameterTypes.add(root);
@@ -261,9 +261,9 @@ export function generateEntry({ sourceImport, sdkImport, endpoints }) {
     .map(({ name, parameters }) => `@json
 class __Args_${name} {
 ${parameters.map((parameter) => {
-    const type = parameter.type === "NearToken" || parameter.type === "U128"
+    const type = parameter.type === "AccountId" || parameter.type === "NearToken" || parameter.type === "U128"
       ? "string"
-      : parameter.type;
+      : parameter.type.replace(/^AccountId\s*\|\s*null$/, "string | null");
     return parameter.defaultValue === undefined
       ? `  ${parameter.name}!: ${type};`
       : `  ${parameter.name}: ${type} = ${parameter.defaultValue};`;
@@ -283,6 +283,11 @@ ${parameters.map((parameter) => {
     }
     const argumentsList = endpoint.parameters
       .map(({ name, type }) => {
+        if (/^AccountId(?:\s*\|\s*null)?$/.test(type)) {
+          return type.includes("null")
+            ? `args.${name} == null ? null : AccountId.fromString(args.${name}!)`
+            : `AccountId.fromString(args.${name})`;
+        }
         if (type === "NearToken") return `NearToken.fromYoctoNear(args.${name})`;
         if (type === "U128") return `U128.fromString(args.${name})`;
         return `args.${name}`;
