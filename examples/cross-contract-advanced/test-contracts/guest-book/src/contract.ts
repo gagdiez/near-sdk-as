@@ -1,12 +1,12 @@
-import { near, NearToken } from "near-sdk-as";
+import { AccountId, near, NearToken } from "near-sdk-as";
 
 @json
 export class PostedMessage {
-  premium: bool = false;
-  sender: string = "";
-  text: string = "";
+  premium: bool;
+  sender: AccountId;
+  text: string;
 
-  constructor(premium: bool = false, sender: string = "", text: string = "") {
+  constructor(premium: bool, sender: AccountId, text: string) {
     this.premium = premium;
     this.sender = sender;
     this.text = text;
@@ -22,7 +22,7 @@ export class State {
 export function add_message(text: string): void {
   state.messages.push(new PostedMessage(
     near.attachedDeposit().greaterThanOrEqual(NearToken.fromMilliNear(100)),
-    near.predecessorAccountId(),
+    AccountId.fromString(near.predecessorAccountId()),
     text,
   ));
 }

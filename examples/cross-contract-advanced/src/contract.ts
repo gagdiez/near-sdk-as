@@ -7,38 +7,55 @@ class NoArgs {}
 
 @json
 class SetGreetingArgs {
-  greeting: string = "";
+  greeting: string;
 
-  constructor(greeting: string = "") {
+  constructor(greeting: string) {
     this.greeting = greeting;
   }
 }
 
 @json
 class GetMessagesArgs {
-  from_index: u32 = 0;
-  limit: u32 = 2;
+  from_index: u32;
+  limit: u32;
+
+  constructor(from_index: u32, limit: u32) {
+    this.from_index = from_index;
+    this.limit = limit;
+  }
 }
 
 @json
 export class PostedMessage {
-  premium: bool = false;
-  sender: string = "";
-  text: string = "";
+  premium: bool;
+  sender: AccountId;
+  text: string;
+
+  constructor(premium: bool, sender: AccountId, text: string) {
+    this.premium = premium;
+    this.sender = sender;
+    this.text = text;
+  }
 }
 
 @json
 export class MultipleContractsResult {
-  greeting: string = "";
-  counter: i8 = 0;
-  messages: PostedMessage[] = [];
+  greeting: string;
+  counter: i8;
+  messages: PostedMessage[];
+
+  constructor(greeting: string, counter: i8, messages: PostedMessage[]) {
+    this.greeting = greeting;
+    this.counter = counter;
+    this.messages = messages;
+  }
 }
 
-@contract_state
+@contract_state({ panicOnDefault: true })
 export class State {
-  hello_account: string = "";
-  counter_account: string = "";
-  guestbook_account: string = "";
+  hello_account!: AccountId;
+  counter_account!: AccountId;
+  guestbook_account!: AccountId;
 }
 
 @init
@@ -47,9 +64,9 @@ export function init(
   counter_account: AccountId,
   guestbook_account: AccountId
 ): void {
-  state.hello_account = hello_account.toString();
-  state.counter_account = counter_account.toString();
-  state.guestbook_account = guestbook_account.toString();
+  state.hello_account = hello_account;
+  state.counter_account = counter_account;
+  state.guestbook_account = guestbook_account;
 }
 
 function callback(methodName: string): Promise {
@@ -59,12 +76,12 @@ function callback(methodName: string): Promise {
 
 @call
 export function multiple_contracts(): Promise {
-  const hello = new Promise(state.hello_account)
+  const hello = new Promise(state.hello_account.toString())
     .callFunction<NoArgs>("get_greeting", new NoArgs(), XCC_GAS);
-  const counter = new Promise(state.counter_account)
+  const counter = new Promise(state.counter_account.toString())
     .callFunction<NoArgs>("get_num", new NoArgs(), XCC_GAS);
-  const guestbook = new Promise(state.guestbook_account)
-    .callFunction<GetMessagesArgs>("get_messages", new GetMessagesArgs(), XCC_GAS);
+  const guestbook = new Promise(state.guestbook_account.toString())
+    .callFunction<GetMessagesArgs>("get_messages", new GetMessagesArgs(0, 2), XCC_GAS);
 
   return hello.and(counter).and(guestbook)
     .then(callback("multiple_contracts_callback"));
@@ -88,15 +105,11 @@ export function multiple_contracts_callback(): MultipleContractsResult {
   if (guestbookResult.succeeded()) messages = guestbookResult.value<PostedMessage[]>();
   else near.log("The call to Guest Book failed");
 
-  const result = new MultipleContractsResult();
-  result.greeting = greeting;
-  result.counter = counter;
-  result.messages = messages;
-  return result;
+  return new MultipleContractsResult(greeting, counter, messages);
 }
 
 function setAndGetGreeting(greeting: string): Promise {
-  return new Promise(state.hello_account)
+  return new Promise(state.hello_account.toString())
     .callFunction<SetGreetingArgs>(
       "set_greeting",
       new SetGreetingArgs(greeting),
@@ -126,7 +139,7 @@ export function similar_contracts_callback(): string[] {
 
 @call
 export function batch_actions(): Promise {
-  return new Promise(state.hello_account)
+  return new Promise(state.hello_account.toString())
     .callFunction<SetGreetingArgs>("set_greeting", new SetGreetingArgs("hi"), XCC_GAS)
     .callFunction<NoArgs>("get_greeting", new NoArgs(), XCC_GAS)
     .callFunction<SetGreetingArgs>("set_greeting", new SetGreetingArgs("bye"), XCC_GAS)

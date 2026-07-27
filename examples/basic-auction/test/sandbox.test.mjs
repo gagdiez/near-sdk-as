@@ -24,6 +24,30 @@ async function deployAuction(endTime) {
   return { sandbox, provider, signer, contract, auctioneerId };
 }
 
+test("rejects public methods before initialization", { timeout: 120_000 }, async () => {
+  const sandbox = await Sandbox.start({});
+  const provider = new JsonRpcProvider({ url: sandbox.rpcUrl });
+  const signer = KeyPairSigner.fromSecretKey(DEFAULT_PRIVATE_KEY);
+  const contract = new Account(DEFAULT_ACCOUNT_ID, provider, signer);
+  try {
+    await contract.deployContract(new Uint8Array(await readFile(new URL("../build/contract.wasm", import.meta.url))));
+    await assert.rejects(provider.callFunction({
+      contractId: DEFAULT_ACCOUNT_ID,
+      method: "get_auctioneer",
+      args: {},
+    }));
+    await assert.rejects(contract.callFunction({
+      contractId: DEFAULT_ACCOUNT_ID,
+      methodName: "bid",
+      args: {},
+      deposit: ONE_NEAR,
+      gas: MAX_GAS,
+    }));
+  } finally {
+    await sandbox.tearDown();
+  }
+});
+
 test("refunds higher bids and lets the auctioneer claim once after the deadline", { timeout: 120_000 }, async () => {
   const endTime = (BigInt(Date.now() + 60_000) * 1_000_000n).toString();
   const { sandbox, provider, signer, contract, auctioneerId } = await deployAuction(endTime);

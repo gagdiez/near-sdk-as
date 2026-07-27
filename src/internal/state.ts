@@ -17,3 +17,7 @@ export function __saveContract<T>(contract: T): void {
 export function __requireUninitialized(): void {
   assert(!rawStorage.has(CONTRACT_STATE_KEY), "Contract is already initialized");
 }
+
+export function __requireInitialized(): void {
+  assert(rawStorage.has(CONTRACT_STATE_KEY), "Contract is not initialized");
+}

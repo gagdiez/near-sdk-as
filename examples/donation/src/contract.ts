@@ -2,18 +2,19 @@ import { AccountId, near, NearToken, Promise } from "near-sdk-as";
 
 @json
 export class Donation {
-  account_id: AccountId | null = null;
-  total_amount: NearToken = NearToken.zero();
+  account_id: AccountId;
+  total_amount: NearToken;
+
+  constructor(account_id: AccountId, total_amount: NearToken) {
+    this.account_id = account_id;
+    this.total_amount = total_amount;
+  }
 }
 
-@contract_state
+@contract_state({ panicOnDefault: true })
 export class State {
-  beneficiary: string = "";
-  donations: Donation[] = [];
-}
-
-function requireInitialized(): void {
-  assert(state.beneficiary.length > 0, "State is not initialized");
+  beneficiary!: AccountId;
+  donations!: Donation[];
 }
 
 function requirePrivate(): void {
@@ -25,33 +26,30 @@ function requirePrivate(): void {
 
 function donationIndex(accountId: string): i32 {
   for (let i = 0; i < state.donations.length; i++) {
-    const stored = state.donations[i].account_id;
-    if (stored != null && stored.toString() == accountId) return i;
+    if (state.donations[i].account_id.toString() == accountId) return i;
   }
   return -1;
 }
 
 @init
 export function init(beneficiary: AccountId): void {
-  state.beneficiary = beneficiary.toString();
+  state.beneficiary = beneficiary;
+  state.donations = [];
 }
 
 @view
 export function get_beneficiary(): string {
-  requireInitialized();
-  return state.beneficiary;
+  return state.beneficiary.toString();
 }
 
 @call
 export function change_beneficiary(new_beneficiary: AccountId): void {
-  requireInitialized();
   requirePrivate();
-  state.beneficiary = new_beneficiary.toString();
+  state.beneficiary = new_beneficiary;
 }
 
 @call({ payable: true })
 export function donate(): string {
-  requireInitialized();
   const donor = near.predecessorAccountId();
   const donationAmount = near.attachedDeposit();
   const storageCost = NearToken.fromMilliNear(1);
@@ -70,10 +68,7 @@ export function donate(): string {
     : donationAmount;
 
   if (index < 0) {
-    const record = new Donation();
-    record.account_id = AccountId.fromString(donor);
-    record.total_amount = total;
-    state.donations.push(record);
+    state.donations.push(new Donation(AccountId.fromString(donor), total));
   }
   else state.donations[index].total_amount = total;
 
@@ -81,30 +76,25 @@ export function donate(): string {
     "Thank you " + donor + " for donating " + donationAmount.toString() +
     "! You donated a total of " + total.toString(),
   );
-  new Promise(state.beneficiary).transfer(toTransfer).detach();
+  new Promise(state.beneficiary.toString()).transfer(toTransfer).detach();
   return total.toString();
 }
 
 @view
 export function get_donation_for_account(account_id: AccountId): Donation {
-  requireInitialized();
   const id = account_id.toString();
   const index = donationIndex(id);
   if (index >= 0) return state.donations[index];
-  const result = new Donation();
-  result.account_id = account_id;
-  return result;
+  return new Donation(account_id, NearToken.zero());
 }
 
 @view
 export function number_of_donors(): string {
-  requireInitialized();
   return state.donations.length.toString();
 }
 
 @view
 export function get_donations(from_index: u32 = 0, limit: u32 = 10): Donation[] {
-  requireInitialized();
   const length = <u32>state.donations.length;
   const start = from_index < length ? from_index : length;
   const remaining = length - start;

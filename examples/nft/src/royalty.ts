@@ -6,5 +6,7 @@ import { JSON, NearToken } from "near-sdk-as";
  */
 @json
 export class Payout {
-  payout: JSON.Obj = new JSON.Obj();
+  payout: JSON.Obj;
+
+  constructor(payout: JSON.Obj = new JSON.Obj()) { this.payout = payout; }
 }

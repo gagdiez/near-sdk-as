@@ -1,4 +1,5 @@
 const ENDPOINT_DECORATOR = /@(call|view|init)(?:\s*\([^)]*\))?/g;
+const CONTRACT_STATE_DECORATOR = /@contract_state(?:\s*\(([^)]*)\))?(?=\s+(?:export\s+)?class\b)/g;
 const STORE_TYPES = new Set([
   "LookupMap",
   "LookupSet",
@@ -20,15 +21,20 @@ function findClosing(source, start, open, close) {
 }
 
 export function generateContractModule(source, sdkImport) {
-  const matches = [...source.matchAll(/@contract_state\s+(?:export\s+)?class\s+([A-Za-z_$][\w$]*)/g)];
+  const matches = [...source.matchAll(CONTRACT_STATE_DECORATOR)];
   if (matches.length !== 1) {
     throw new Error(`Expected exactly one @contract_state class, found ${matches.length}`);
   }
 
   const [match] = matches;
-  const className = match[1];
+  const declaration = /^\s*(?:export\s+)?class\s+([A-Za-z_$][\w$]*)/.exec(
+    source.slice(match.index + match[0].length),
+  );
+  if (!declaration) throw new Error("@contract_state must decorate a class");
+  const className = declaration[1];
+  const panicOnDefault = /\bpanicOnDefault\s*:\s*true\b/.test(match[1] || "");
   const classStart = match.index;
-  const classBodyStart = source.indexOf("{", classStart + match[0].length);
+  const classBodyStart = source.indexOf("{", classStart + match[0].length + declaration[0].length);
   if (classBodyStart === -1) throw new Error(`Contract class ${className} has no body`);
   const classBodyEnd = findClosing(source, classBodyStart, "{", "}");
 
@@ -37,7 +43,7 @@ export function generateContractModule(source, sdkImport) {
   const storeFields = discoverStoreFields(source.slice(classBodyStart + 1, classBodyEnd));
   const contractAndBody = omitStoreFields(source
     .slice(classStart, classBodyEnd + 1)
-    .replace("@contract_state", "@json"), storeFields);
+    .replace(match[0], "@json"), storeFields);
   const afterClass = source.slice(classBodyEnd + 1);
   const state = `
 
@@ -53,6 +59,7 @@ ${storeFields.map(({ name }) => `state.${name}.__bind("state.${name}");`).join("
 
   return {
     className,
+    panicOnDefault,
     // Contracts always use the public package name. A local build can map that
     // package to a relative SDK entry without leaking the path into user code.
     source: generatedSource.replace(
@@ -64,14 +71,14 @@ ${storeFields.map(({ name }) => `state.${name}.__bind("state.${name}");`).join("
 
 function discoverStoreFields(classBody) {
   const fields = [];
-  const fieldPattern = /^\s*(?:public\s+)?(?:readonly\s+)?([A-Za-z_$][\w$]*)\s*(?::\s*((?:(?:store|collections)\.)?([A-Za-z_$][\w$]*)(?:<([^;=]+)>)?))?\s*=\s*(new\s+(?:(?:store|collections)\.)?([A-Za-z_$][\w$]*)(?:<[^;=()]+>)?\s*\(\s*\))/gm;
+  const fieldPattern = /^\s*(?:public\s+)?(?:readonly\s+)?([A-Za-z_$][\w$]*)\s*!?\s*:\s*((?:(?:store|collections)\.)?([A-Za-z_$][\w$]*)(?:<([^;=]+)>)?)(?:\s*=\s*(new\s+(?:(?:store|collections)\.)?([A-Za-z_$][\w$]*)(?:<[^;=()]+>)?\s*\(\s*\)))?\s*;/gm;
   for (const match of classBody.matchAll(fieldPattern)) {
     const type = match[6];
     if (!STORE_TYPES.has(type)) continue;
     if (new RegExp(`\\b(${[...STORE_TYPES].join("|")})\\s*(?:<|\\b)`).test(match[4] || "")) {
       throw new Error("Nested scalable collections are not supported");
     }
-    fields.push({ name: match[1], type, initializer: match[5] });
+    fields.push({ name: match[1], type, initializer: match[5] || `new ${match[2]}()` });
   }
   return fields;
 }
@@ -79,7 +86,7 @@ function discoverStoreFields(classBody) {
 function omitStoreFields(contractSource, fields) {
   let result = contractSource;
   for (const { name } of fields) {
-    const field = new RegExp(`^(\\s*)(?:@omit\\s*\\n\\s*)?((?:public\\s+)?(?:readonly\\s+)?${name}\\s*[:=])`, "m");
+    const field = new RegExp(`^(\\s*)(?:@omit\\s*\\n\\s*)?((?:public\\s+)?(?:readonly\\s+)?${name}\\s*!?\\s*[:=])`, "m");
     result = result.replace(field, "$1@omit\n$1$2");
   }
   return result;
@@ -205,7 +212,7 @@ export function discoverEndpoints(source) {
   return endpoints;
 }
 
-export function generateEntry({ sourceImport, sdkImport, endpoints }) {
+export function generateEntry({ sourceImport, sdkImport, endpoints, panicOnDefault = false }) {
   if (endpoints.length === 0) {
     throw new Error("No @call, @view, or @init endpoints were found");
   }
@@ -222,7 +229,10 @@ export function generateEntry({ sourceImport, sdkImport, endpoints }) {
   for (const endpoint of endpoints) {
     for (const parameter of endpoint.parameters) {
       const root = /^([A-Za-z_$][\w$]*)/.exec(parameter.type)?.[1];
-      if (root === "AccountId" || root === "NearToken" || root === "U128" || root === "Gas" || root === "JSON") {
+      if (root === "Timestamp") {
+        sdkParameterTypes.add("UInt64");
+      }
+      else if (root === "AccountId" || root === "NearToken" || root === "UInt128" || root === "UInt64" || root === "Gas" || root === "JSON") {
         sdkParameterTypes.add(root);
       }
       else if (root && !builtinTypes.has(root)) parameterTypes.add(root);
@@ -252,6 +262,9 @@ export function generateEntry({ sourceImport, sdkImport, endpoints }) {
   if (endpoints.some(({ kind }) => kind === "init")) {
     helpers.push("__requireUninitialized");
   }
+  if (panicOnDefault && endpoints.some(({ kind }) => kind !== "init")) {
+    helpers.push("__requireInitialized");
+  }
   if (endpoints.some(({ private: privateEndpoint }) => privateEndpoint)) {
     helpers.push("__requirePrivate");
   }
@@ -261,7 +274,7 @@ export function generateEntry({ sourceImport, sdkImport, endpoints }) {
     .map(({ name, parameters }) => `@json
 class __Args_${name} {
 ${parameters.map((parameter) => {
-    const type = parameter.type === "AccountId" || parameter.type === "NearToken" || parameter.type === "U128"
+    const type = parameter.type === "AccountId" || parameter.type === "NearToken" || parameter.type === "UInt128" || parameter.type === "UInt64" || parameter.type === "Timestamp"
       ? "string"
       : parameter.type.replace(/^AccountId\s*\|\s*null$/, "string | null");
     return parameter.defaultValue === undefined
@@ -273,6 +286,9 @@ ${parameters.map((parameter) => {
 
   const wrappers = endpoints.map((endpoint) => {
     const lines = [`export function ${endpoint.name}(): void {`];
+    if (endpoint.kind !== "init" && panicOnDefault) {
+      lines.push("  __requireInitialized();");
+    }
     if (!endpoint.payable) {
       lines.push("  __requireNoDeposit();");
     }
@@ -289,7 +305,8 @@ ${parameters.map((parameter) => {
             : `AccountId.fromString(args.${name})`;
         }
         if (type === "NearToken") return `NearToken.fromYoctoNear(args.${name})`;
-        if (type === "U128") return `U128.fromString(args.${name})`;
+        if (type === "UInt128") return `UInt128.fromString(args.${name})`;
+        if (type === "UInt64" || type === "Timestamp") return `UInt64.fromString(args.${name})`;
         return `args.${name}`;
       })
       .join(", ");
@@ -298,7 +315,7 @@ ${parameters.map((parameter) => {
     else lines.push(`  const result = ${call};`);
     if (endpoint.kind !== "view") lines.push("  __saveContract(__state);");
     if (endpoint.returnsPromise) lines.push("  __returnPromise(result);");
-    else if (endpoint.returnType === "U128" || endpoint.returnType === "NearToken") {
+    else if (endpoint.returnType === "UInt128" || endpoint.returnType === "UInt64" || endpoint.returnType === "Timestamp" || endpoint.returnType === "NearToken") {
       lines.push("  __returnJson(result.toString());");
     }
     else if (!endpoint.returnsVoid) lines.push("  __returnJson(result);");

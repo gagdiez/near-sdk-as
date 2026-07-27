@@ -1,4 +1,4 @@
-import { AccountId, embed, Gas, JSON, near, NearToken, Promise, U128 } from "near-sdk-as";
+import { AccountId, embed, Gas, JSON, near, NearToken, Promise, UInt128 } from "near-sdk-as";
 
 const EXTRA_STORAGE_BYTES: u64 = 10_000;
 const STORAGE_BYTE_COST = NearToken.fromYoctoNear("10000000000000000000");
@@ -8,37 +8,53 @@ const TOKEN_CODE = embed.bytes("../token/build/contract.wasm");
 
 @json
 export class TokenMetadata {
-  spec: string = "";
-  name: string = "";
-  symbol: string = "";
-  decimals: u8 = 0;
-  icon: string | null = null;
-  reference: string | null = null;
-  reference_hash: string | null = null;
+  spec: string;
+  name: string;
+  symbol: string;
+  decimals: u8;
+  icon: string | null;
+  reference: string | null;
+  reference_hash: string | null;
+
+  constructor(spec: string = "", name: string = "", symbol: string = "", decimals: u8 = 0, icon: string | null = null, reference: string | null = null, reference_hash: string | null = null) {
+    this.spec = spec;
+    this.name = name;
+    this.symbol = symbol;
+    this.decimals = decimals;
+    this.icon = icon;
+    this.reference = reference;
+    this.reference_hash = reference_hash;
+  }
 }
 
 @json
 export class TokenArgs {
-  owner_id: string = "";
+  owner_id: string;
   @alias("total_supply")
-  __total_supply: string = "0";
-  metadata: TokenMetadata = new TokenMetadata();
+  __total_supply: string;
+  metadata: TokenMetadata;
 
-  get total_supply(): U128 {
-    return U128.fromString(this.__total_supply);
+  constructor(owner_id: string = "", total_supply: UInt128 = UInt128.zero(), metadata: TokenMetadata = new TokenMetadata()) {
+    this.owner_id = owner_id;
+    this.__total_supply = total_supply.toString();
+    this.metadata = metadata;
   }
 
-  set total_supply(value: U128) {
+  get total_supply(): UInt128 {
+    return UInt128.fromString(this.__total_supply);
+  }
+
+  set total_supply(value: UInt128) {
     this.__total_supply = value.toString();
   }
 }
 
 @json
 class CallbackArgs {
-  user: string = "";
-  deposit: NearToken = NearToken.zero();
+  user: string;
+  deposit: NearToken;
 
-  constructor(user: string = "", deposit: NearToken = NearToken.zero()) {
+  constructor(user: string, deposit: NearToken) {
     this.user = user;
     this.deposit = deposit;
   }

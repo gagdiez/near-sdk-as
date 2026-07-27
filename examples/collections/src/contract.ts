@@ -1,25 +1,43 @@
+import { AccountId } from "near-sdk-as";
 import * as collections from "near-sdk-as";
 
 @json
 export class Metadata {
-  title: string = "";
+  title: string;
+
+  constructor(title: string = "") { this.title = title; }
 }
 
 @json
 export class Profile {
-  account_id: string = "";
-  metadata: Metadata = new Metadata();
+  account_id: AccountId | null;
+  metadata: Metadata;
+
+  constructor(account_id: AccountId | null = null, metadata: Metadata = new Metadata()) {
+    this.account_id = account_id;
+    this.metadata = metadata;
+  }
 }
 
 @json
 export class Snapshot {
-  lookup: u32 = 0;
-  map_keys: string[] = [];
-  set_values: string[] = [];
-  vector_values: string[] = [];
-  deferred: string = "";
-  option: string = "";
-  profile: Profile = new Profile();
+  lookup: u32;
+  map_keys: string[];
+  set_values: string[];
+  vector_values: string[];
+  deferred: string;
+  option: string;
+  profile: Profile;
+
+  constructor(lookup: u32 = 0, map_keys: string[] = [], set_values: string[] = [], vector_values: string[] = [], deferred: string = "", option: string = "", profile: Profile = new Profile()) {
+    this.lookup = lookup;
+    this.map_keys = map_keys;
+    this.set_values = set_values;
+    this.vector_values = vector_values;
+    this.deferred = deferred;
+    this.option = option;
+    this.profile = profile;
+  }
 }
 
 @contract_state
@@ -37,7 +55,7 @@ export class State {
 @call
 export function seed(): void {
   const profile = new Profile();
-  profile.account_id = "alice";
+  profile.account_id = AccountId.fromString("alice");
   profile.metadata.title = "Nested value";
 
   state.lookup.set("one", 1);

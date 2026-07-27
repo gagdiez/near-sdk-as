@@ -2,10 +2,10 @@ import { AccountId, near } from "near-sdk-as";
 
 @json
 export class PlayerPoints {
-  account_id: string = "";
-  points: u8 = 0;
+  account_id: AccountId;
+  points: u8;
 
-  constructor(account_id: string = "", points: u8 = 0) {
+  constructor(account_id: AccountId, points: u8) {
     this.account_id = account_id;
     this.points = points;
   }
@@ -18,7 +18,7 @@ export class State {
 
 function playerIndex(accountId: string): i32 {
   for (let index = 0; index < state.players.length; index++) {
-    if (state.players[index].account_id == accountId) return index;
+    if (state.players[index].account_id.toString() == accountId) return index;
   }
   return -1;
 }
@@ -31,11 +31,11 @@ function simulateCoinFlip(): string {
 
 @call
 export function flip_coin(player_guess: string): string {
-  const player = near.predecessorAccountId();
-  near.log(player + " chose " + player_guess);
+  const player = AccountId.fromString(near.predecessorAccountId());
+  near.log(player.toString() + " chose " + player_guess);
 
   const outcome = simulateCoinFlip();
-  const index = playerIndex(player);
+  const index = playerIndex(player.toString());
   let points: u8 = index < 0 ? 0 : state.players[index].points;
   if (outcome == player_guess) points += 1;
   else if (points > 0) points -= 1;

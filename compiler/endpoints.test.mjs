@@ -66,6 +66,14 @@ test("requires exactly one contract state class", () => {
   );
 });
 
+test("allows default state fields alongside an init endpoint", () => {
+  const source = `
+    @contract_state export class State { owner: string = ""; }
+    @init export function init(owner: string): void {}
+  `;
+  assert.match(generateContractModule(source, "near-sdk-as").source, /owner: string = ""/);
+});
+
 test("discovers typed call and view functions", () => {
   const endpoints = discoverEndpoints(`
     @call
@@ -130,16 +138,16 @@ test("imports SDK value types from the SDK", () => {
   assert.match(entry, /__refund\(NearToken\.fromYoctoNear\(args\.amount\)\)/);
 
   const [mint] = discoverEndpoints(
-    "@call export function mint(amount: U128): void {}",
+    "@call export function mint(amount: UInt128): void {}",
   );
   const mintEntry = generateEntry({
     sourceImport: "../contract",
     sdkImport: "near-sdk-as",
     endpoints: [mint],
   });
-  assert.match(mintEntry, /__readInput,\n  U128,/);
+  assert.match(mintEntry, /__readInput,\n  UInt128,/);
   assert.match(mintEntry, /amount!: string/);
-  assert.match(mintEntry, /__mint\(U128\.fromString\(args\.amount\)\)/);
+  assert.match(mintEntry, /__mint\(UInt128\.fromString\(args\.amount\)\)/);
 
   const [storageDeposit] = discoverEndpoints(
     "@call export function storage_deposit(account_id: AccountId | null = null): void {}",
@@ -153,11 +161,24 @@ test("imports SDK value types from the SDK", () => {
   assert.doesNotMatch(storageDepositEntry, /storage_deposit as __storage_deposit,\n  AccountId,/);
   assert.match(storageDepositEntry, /account_id: string \| null = null/);
   assert.match(storageDepositEntry, /__storage_deposit\(args\.account_id == null \? null : AccountId\.fromString\(args\.account_id!\)\)/);
+
+  const [schedule] = discoverEndpoints(
+    "@call export function schedule(end_time: Timestamp): Timestamp { return end_time; }",
+  );
+  const scheduleEntry = generateEntry({
+    sourceImport: "../contract",
+    sdkImport: "near-sdk-as",
+    endpoints: [schedule],
+  });
+  assert.match(scheduleEntry, /__readInput,\n  UInt64,/);
+  assert.match(scheduleEntry, /end_time!: string/);
+  assert.match(scheduleEntry, /__schedule\(UInt64\.fromString\(args\.end_time\)\)/);
+  assert.match(scheduleEntry, /__returnJson\(result\.toString\(\)\)/);
 });
 
-test("returns U128 values as NEAR JSON decimal strings", () => {
+test("returns UInt128 values as NEAR JSON decimal strings", () => {
   const [endpoint] = discoverEndpoints(
-    "@view export function total_supply(): U128 { return U128.zero(); }",
+    "@view export function total_supply(): UInt128 { return UInt128.zero(); }",
   );
   const entry = generateEntry({
     sourceImport: "../contract",
@@ -241,6 +262,45 @@ test("init endpoints require absent state and persist the contract", () => {
     () => discoverEndpoints("@init({ privateMethod: true }) export function init(): void {}"),
     /cannot be private/,
   );
+});
+
+test("panicOnDefault makes non-init endpoints require initialized state", () => {
+  const endpoints = discoverEndpoints(`
+    @init export function init(): void {}
+    @view export function get(): i32 { return 0; }
+    @call export function set(): void {}
+  `);
+  const entry = generateEntry({
+    sourceImport: "../contract",
+    sdkImport: "near-sdk-as",
+    endpoints,
+    panicOnDefault: true,
+  });
+  assert.match(entry, /__requireInitialized,/);
+  assert.match(entry, /export function get\(\): void \{\n  __requireInitialized\(\)/);
+  assert.match(entry, /export function set\(\): void \{\n  __requireInitialized\(\)/);
+});
+
+test("ordinary state does not require initialization before non-init endpoints", () => {
+  const endpoints = discoverEndpoints(`
+    @init export function init(): void {}
+    @view export function get(): i32 { return 0; }
+  `);
+  const entry = generateEntry({
+    sourceImport: "../contract",
+    sdkImport: "near-sdk-as",
+    endpoints,
+  });
+  assert.doesNotMatch(entry, /__requireInitialized/);
+});
+
+test("reads panicOnDefault from the contract state decorator", () => {
+  const generated = generateContractModule(`
+    @contract_state({ panicOnDefault: true })
+    export class State {}
+  `, "near-sdk-as");
+  assert.equal(generated.panicOnDefault, true);
+  assert.match(generated.source, /@json\s+export class State/);
 });
 
 test("views cannot be payable", () => {

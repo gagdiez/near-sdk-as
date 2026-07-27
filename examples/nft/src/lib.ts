@@ -8,20 +8,20 @@ import * as nftCore from "./nft_core";
 
 export { Approval, JsonToken, NFTContractMetadata, TokenMetadata } from "./metadata";
 
-@contract_state
+@contract_state({ panicOnDefault: true })
 export class State {
-  owner_id: string = "";
-  metadata: NFTContractMetadata = new NFTContractMetadata();
-  tokens_per_owner: collections.LookupMap<string, OwnerTokens> = new collections.LookupMap<string, OwnerTokens>();
-  tokens_by_id: collections.LookupMap<TokenId, Token> = new collections.LookupMap<TokenId, Token>();
-  token_metadata_by_id: collections.LookupMap<TokenId, TokenMetadata> = new collections.LookupMap<TokenId, TokenMetadata>();
-  all_token_ids: collections.Vector<TokenId> = new collections.Vector<TokenId>();
+  owner_id!: AccountId;
+  metadata!: NFTContractMetadata;
+  tokens_per_owner!: collections.LookupMap<string, OwnerTokens>;
+  tokens_by_id!: collections.LookupMap<TokenId, Token>;
+  token_metadata_by_id!: collections.LookupMap<TokenId, TokenMetadata>;
+  all_token_ids!: collections.Vector<TokenId>;
 }
 
 @init
 export function init(owner_id: AccountId, metadata: NFTContractMetadata): void {
   assert(metadata.name.length > 0 && metadata.symbol.length > 0, "Metadata name and symbol are required");
-  state.owner_id = owner_id.toString();
+  state.owner_id = owner_id;
   state.metadata = metadata;
 }
 
@@ -30,7 +30,7 @@ export function new_default_meta(owner_id: AccountId): void {
   const metadata = new NFTContractMetadata();
   metadata.name = "NFT Tutorial Contract";
   metadata.symbol = "GOTEAM";
-  state.owner_id = owner_id.toString();
+  state.owner_id = owner_id;
   state.metadata = metadata;
 }
 

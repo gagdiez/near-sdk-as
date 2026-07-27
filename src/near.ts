@@ -2,6 +2,8 @@ import { fromBytes, readRegister, toBytes } from "./internal/bytes";
 import { host } from "./internal/host";
 import { Gas } from "./gas";
 import { NearToken } from "./near-token";
+import { Timestamp } from "./timestamp";
+import { UInt64 } from "./uint64";
 import { __promiseResult, PromiseResult } from "./promise";
 import { PublicKey } from "./public-key";
 
@@ -44,8 +46,8 @@ export namespace near {
     return host.blockHeight();
   }
 
-  export function blockTimestamp(): u64 {
-    return host.blockTimestamp();
+  export function blockTimestamp(): Timestamp {
+    return UInt64.fromU64(host.blockTimestamp());
   }
 
   export function epochHeight(): u64 {

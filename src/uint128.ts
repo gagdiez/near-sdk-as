@@ -1,6 +1,6 @@
 /** An unsigned 128-bit integer. NEAR JSON represents this value as a decimal string. */
 @json
-export class U128 {
+export class UInt128 {
   constructor(
     /** @internal Low 64-bit limb used by contract-state serialization. */
     readonly __low: u64 = 0,
@@ -8,23 +8,23 @@ export class U128 {
     readonly __high: u64 = 0,
   ) {}
 
-  static zero(): U128 {
-    return new U128(0, 0);
+  static zero(): UInt128 {
+    return new UInt128(0, 0);
   }
 
-  static max(): U128 {
-    return new U128(u64.MAX_VALUE, u64.MAX_VALUE);
+  static max(): UInt128 {
+    return new UInt128(u64.MAX_VALUE, u64.MAX_VALUE);
   }
 
-  static fromString(value: string): U128 {
-    assert(value.length > 0, "U128 value cannot be empty");
+  static fromString(value: string): UInt128 {
+    assert(value.length > 0, "UInt128 value cannot be empty");
     let low: u64 = 0;
     let high: u64 = 0;
     const mask: u64 = 0xffff_ffff;
 
     for (let i = 0; i < value.length; i++) {
       const code = value.charCodeAt(i);
-      assert(code >= 48 && code <= 57, "U128 value must be decimal");
+      assert(code >= 48 && code <= 57, "UInt128 value must be decimal");
       const digit = <u64>(code - 48);
 
       const lowProduct = (low & mask) * 10;
@@ -34,53 +34,53 @@ export class U128 {
 
       const highProduct = (high & mask) * 10 + carry;
       const upperHighProduct = (high >> 32) * 10 + (highProduct >> 32);
-      assert(upperHighProduct <= mask, "U128 value exceeds its maximum");
+      assert(upperHighProduct <= mask, "UInt128 value exceeds its maximum");
       let nextHigh = (upperHighProduct << 32) | (highProduct & mask);
 
       const withDigit = nextLow + digit;
       if (withDigit < nextLow) {
-        assert(nextHigh != u64.MAX_VALUE, "U128 value exceeds its maximum");
+        assert(nextHigh != u64.MAX_VALUE, "UInt128 value exceeds its maximum");
         nextHigh++;
       }
       low = withDigit;
       high = nextHigh;
     }
-    return new U128(low, high);
+    return new UInt128(low, high);
   }
 
-  static fromU64(value: u64): U128 {
-    return new U128(value, 0);
+  static fromU64(value: u64): UInt128 {
+    return new UInt128(value, 0);
   }
 
   /** @internal Creates a value from its little-endian representation. */
-  static __fromBytes(bytes: Uint8Array): U128 {
-    assert(bytes.length == 16, "U128 requires exactly 16 bytes");
-    return new U128(
+  static __fromBytes(bytes: Uint8Array): UInt128 {
+    assert(bytes.length == 16, "UInt128 requires exactly 16 bytes");
+    return new UInt128(
       load<u64>(bytes.dataStart),
       load<u64>(bytes.dataStart + 8),
     );
   }
 
-  greaterThanOrEqual(other: U128): bool {
+  greaterThanOrEqual(other: UInt128): bool {
     return this.__high > other.__high ||
       (this.__high == other.__high && this.__low >= other.__low);
   }
 
-  lessThan(other: U128): bool {
+  lessThan(other: UInt128): bool {
     return this.__high < other.__high ||
       (this.__high == other.__high && this.__low < other.__low);
   }
 
-  lessThanOrEqual(other: U128): bool {
+  lessThanOrEqual(other: UInt128): bool {
     return this.__high < other.__high ||
       (this.__high == other.__high && this.__low <= other.__low);
   }
 
-  equals(other: U128): bool {
+  equals(other: UInt128): bool {
     return this.__low == other.__low && this.__high == other.__high;
   }
 
-  greaterThan(other: U128): bool {
+  greaterThan(other: UInt128): bool {
     return this.__high > other.__high ||
       (this.__high == other.__high && this.__low > other.__low);
   }
@@ -89,24 +89,24 @@ export class U128 {
     return this.__low == 0 && this.__high == 0;
   }
 
-  checkedAdd(other: U128): U128 | null {
+  checkedAdd(other: UInt128): UInt128 | null {
     const low = this.__low + other.__low;
     const carry: u64 = low < this.__low ? 1 : 0;
     const partialHigh = this.__high + other.__high;
     if (partialHigh < this.__high) return null;
     const high = partialHigh + carry;
-    return high < partialHigh ? null : new U128(low, high);
+    return high < partialHigh ? null : new UInt128(low, high);
   }
 
-  checkedSub(other: U128): U128 | null {
+  checkedSub(other: UInt128): UInt128 | null {
     if (!this.greaterThanOrEqual(other)) return null;
     const borrow: u64 = this.__low < other.__low ? 1 : 0;
-    return new U128(this.__low - other.__low, this.__high - other.__high - borrow);
+    return new UInt128(this.__low - other.__low, this.__high - other.__high - borrow);
   }
 
   /** Returns the product, or `null` when it exceeds `u128`. */
-  checkedMul(other: U128): U128 | null {
-    let result = U128.zero();
+  checkedMul(other: UInt128): UInt128 | null {
+    let result = UInt128.zero();
     let addend = this;
     for (let bit = 0; bit < 128; bit++) {
       if (other.__bitAt(bit)) {
@@ -124,74 +124,74 @@ export class U128 {
   }
 
   /** Returns the product with a machine-sized multiplier, or `null` on overflow. */
-  checkedMulU64(multiplier: u64): U128 | null {
-    return this.checkedMul(U128.fromU64(multiplier));
+  checkedMulU64(multiplier: u64): UInt128 | null {
+    return this.checkedMul(UInt128.fromU64(multiplier));
   }
 
-  add(other: U128): U128 {
+  add(other: UInt128): UInt128 {
     const result = this.checkedAdd(other);
-    assert(result != null, "U128 addition overflow");
+    assert(result != null, "UInt128 addition overflow");
     return result!;
   }
 
-  sub(other: U128): U128 {
+  sub(other: UInt128): UInt128 {
     const result = this.checkedSub(other);
-    assert(result != null, "U128 subtraction underflow");
+    assert(result != null, "UInt128 subtraction underflow");
     return result!;
   }
 
-  mul(other: U128): U128 {
+  mul(other: UInt128): UInt128 {
     const result = this.checkedMul(other);
-    assert(result != null, "U128 multiplication overflow");
+    assert(result != null, "UInt128 multiplication overflow");
     return result!;
   }
 
-  mulU64(multiplier: u64): U128 {
+  mulU64(multiplier: u64): UInt128 {
     const result = this.checkedMulU64(multiplier);
-    assert(result != null, "U128 multiplication overflow");
+    assert(result != null, "UInt128 multiplication overflow");
     return result!;
   }
 
-  checkedDiv(other: U128): U128 | null {
+  checkedDiv(other: UInt128): UInt128 | null {
     if (other.isZero()) return null;
     return this.__divRem(other).quotient;
   }
 
-  checkedRem(other: U128): U128 | null {
+  checkedRem(other: UInt128): UInt128 | null {
     if (other.isZero()) return null;
     return this.__divRem(other).remainder;
   }
 
-  div(other: U128): U128 {
+  div(other: UInt128): UInt128 {
     const result = this.checkedDiv(other);
-    assert(result != null, "U128 division by zero");
+    assert(result != null, "UInt128 division by zero");
     return result!;
   }
 
-  rem(other: U128): U128 {
+  rem(other: UInt128): UInt128 {
     const result = this.checkedRem(other);
-    assert(result != null, "U128 division by zero");
+    assert(result != null, "UInt128 division by zero");
     return result!;
   }
 
-  saturatingAdd(other: U128): U128 {
+  saturatingAdd(other: UInt128): UInt128 {
     const result = this.checkedAdd(other);
-    return result == null ? U128.max() : result;
+    return result == null ? UInt128.max() : result;
   }
 
-  saturatingSub(other: U128): U128 {
+  saturatingSub(other: UInt128): UInt128 {
     const result = this.checkedSub(other);
-    return result == null ? U128.zero() : result;
+    return result == null ? UInt128.zero() : result;
   }
 
-  saturatingMul(other: U128): U128 {
+  saturatingMul(other: UInt128): UInt128 {
     const result = this.checkedMul(other);
-    return result == null ? U128.max() : result;
+    return result == null ? UInt128.max() : result;
   }
 
-  saturatingMulU64(multiplier: u64): U128 {
+  saturatingMulU64(multiplier: u64): UInt128 {
     const result = this.checkedMulU64(multiplier);
-    return result == null ? U128.max() : result;
+    return result == null ? UInt128.max() : result;
   }
 
   private __bitAt(index: i32): bool {
@@ -207,19 +207,19 @@ export class U128 {
     return false;
   }
 
-  private __shiftLeftOne(): U128 | null {
+  private __shiftLeftOne(): UInt128 | null {
     if ((this.__high >> 63) != 0) return null;
-    return new U128(this.__low << 1, (this.__high << 1) | (this.__low >> 63));
+    return new UInt128(this.__low << 1, (this.__high << 1) | (this.__low >> 63));
   }
 
-  private __divRem(divisor: U128): U128Division {
+  private __divRem(divisor: UInt128): UInt128Division {
     let quotientLow: u64 = 0;
     let quotientHigh: u64 = 0;
-    let remainder = U128.zero();
+    let remainder = UInt128.zero();
 
     for (let bit = 127; bit >= 0; bit--) {
       const overflow = (remainder.__high >> 63) != 0;
-      remainder = new U128(
+      remainder = new UInt128(
         (remainder.__low << 1) | (this.__bitAt(bit) ? 1 : 0),
         (remainder.__high << 1) | (remainder.__low >> 63),
       );
@@ -229,12 +229,12 @@ export class U128 {
         else quotientHigh |= <u64>1 << <u64>(bit - 64);
       }
     }
-    return new U128Division(new U128(quotientLow, quotientHigh), remainder);
+    return new UInt128Division(new UInt128(quotientLow, quotientHigh), remainder);
   }
 
-  private __wrappingSub(other: U128): U128 {
+  private __wrappingSub(other: UInt128): UInt128 {
     const borrow: u64 = this.__low < other.__low ? 1 : 0;
-    return new U128(this.__low - other.__low, this.__high - other.__high - borrow);
+    return new UInt128(this.__low - other.__low, this.__high - other.__high - borrow);
   }
 
   /** @internal Encodes this value as little-endian bytes. */
@@ -268,6 +268,6 @@ export class U128 {
   }
 }
 
-class U128Division {
-  constructor(readonly quotient: U128, readonly remainder: U128) {}
+class UInt128Division {
+  constructor(readonly quotient: UInt128, readonly remainder: UInt128) {}
 }

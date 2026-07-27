@@ -7,28 +7,26 @@ class NoArgs {}
 
 @json
 class SetGreetingArgs {
-  greeting: string = "";
+  greeting: string;
 
-  constructor(greeting: string = "") {
+  constructor(greeting: string) {
     this.greeting = greeting;
   }
 }
 
-@contract_state
+@contract_state({ panicOnDefault: true })
 export class State {
-  hello_account: string = "";
+  hello_account!: AccountId;
 }
 
 @init
 export function init(hello_account: AccountId): void {
-  state.hello_account = hello_account.toString();
+  state.hello_account = hello_account;
 }
 
 @call
 export function query_greeting(): Promise {
-  assert(state.hello_account.length > 0, "State is not initialized");
-
-  return new Promise(state.hello_account)
+  return new Promise(state.hello_account.toString())
     .callFunction<NoArgs>("get_greeting", new NoArgs(), FIVE_TGAS)
     .then(
       new Promise(near.currentAccountId())
@@ -50,9 +48,7 @@ export function query_greeting_callback(): string {
 
 @call
 export function change_greeting(new_greeting: string): Promise {
-  assert(state.hello_account.length > 0, "State is not initialized");
-
-  return new Promise(state.hello_account)
+  return new Promise(state.hello_account.toString())
     .callFunction<SetGreetingArgs>(
       "set_greeting",
       new SetGreetingArgs(new_greeting),

@@ -1,8 +1,8 @@
-import { near, U128 } from "near-sdk-as";
+import { near, UInt128 } from "near-sdk-as";
 import { state } from "./contract.near.generated";
 
-export function balanceOf(accountId: string): U128 {
-  return state.accounts.get(accountId, U128.zero());
+export function balanceOf(accountId: string): UInt128 {
+  return state.accounts.get(accountId, UInt128.zero());
 }
 
 export function requireRegistered(accountId: string): void {
@@ -11,24 +11,24 @@ export function requireRegistered(accountId: string): void {
 
 export function register(accountId: string): void {
   assert(!state.accounts.has(accountId), "The account is already registered");
-  state.accounts.set(accountId, U128.zero());
+  state.accounts.set(accountId, UInt128.zero());
 }
 
-export function deposit(accountId: string, amount: U128): void {
+export function deposit(accountId: string, amount: UInt128): void {
   requireRegistered(accountId);
   const next = balanceOf(accountId).checkedAdd(amount);
   assert(next != null, "Balance overflow");
   state.accounts.set(accountId, next!);
 }
 
-export function withdraw(accountId: string, amount: U128): void {
+export function withdraw(accountId: string, amount: UInt128): void {
   requireRegistered(accountId);
   const next = balanceOf(accountId).checkedSub(amount);
   assert(next != null, "The account doesn't have enough balance");
   state.accounts.set(accountId, next!);
 }
 
-export function transfer(senderId: string, receiverId: string, amount: U128, memo: string = ""): void {
+export function transfer(senderId: string, receiverId: string, amount: UInt128, memo: string = ""): void {
   assert(senderId != receiverId, "Sender and receiver should be different");
   assert(!amount.isZero(), "The amount should be a positive number");
   withdraw(senderId, amount);
@@ -38,7 +38,7 @@ export function transfer(senderId: string, receiverId: string, amount: U128, mem
   near.log(event + "}]}");
 }
 
-export function min(left: U128, right: U128): U128 {
+export function min(left: UInt128, right: UInt128): UInt128 {
   return left.lessThanOrEqual(right) ? left : right;
 }
 

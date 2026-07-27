@@ -1,38 +1,48 @@
-import { AccountId, assertOneYocto, near, U128 } from "near-sdk-as";
+import { AccountId, assertOneYocto, near, UInt128 } from "near-sdk-as";
 
 @json
 export class TokenMetadata {
-  spec: string = "";
-  name: string = "";
-  symbol: string = "";
-  decimals: u8 = 0;
-  icon: string | null = null;
-  reference: string | null = null;
-  reference_hash: string | null = null;
+  spec: string;
+  name: string;
+  symbol: string;
+  decimals: u8;
+  icon: string | null;
+  reference: string | null;
+  reference_hash: string | null;
+
+  constructor(spec: string = "", name: string = "", symbol: string = "", decimals: u8 = 0, icon: string | null = null, reference: string | null = null, reference_hash: string | null = null) {
+    this.spec = spec;
+    this.name = name;
+    this.symbol = symbol;
+    this.decimals = decimals;
+    this.icon = icon;
+    this.reference = reference;
+    this.reference_hash = reference_hash;
+  }
 }
 
 @json
 class Balance {
-  account_id: string = "";
-  amount: U128 = U128.zero();
+  account_id: AccountId;
+  amount: UInt128;
 
-  constructor(account_id: string = "", amount: U128 = U128.zero()) {
+  constructor(account_id: AccountId, amount: UInt128) {
     this.account_id = account_id;
     this.amount = amount;
   }
 }
 
-@contract_state
+@contract_state({ panicOnDefault: true })
 export class State {
-  owner_id: string = "";
-  total_supply: U128 = U128.zero();
-  metadata: TokenMetadata = new TokenMetadata();
-  balances: Balance[] = [];
+  owner_id!: AccountId;
+  total_supply!: UInt128;
+  metadata!: TokenMetadata;
+  balances!: Balance[];
 }
 
 function balanceIndex(accountId: string): i32 {
   for (let i = 0; i < state.balances.length; i++) {
-    if (state.balances[i].account_id == accountId) return i;
+    if (state.balances[i].account_id.toString() == accountId) return i;
   }
   return -1;
 }
@@ -40,13 +50,13 @@ function balanceIndex(accountId: string): i32 {
 @init
 export function initialize(
   owner_id: AccountId,
-  total_supply: U128,
+  total_supply: UInt128,
   metadata: TokenMetadata
 ): void {
-  state.owner_id = owner_id.toString();
+  state.owner_id = owner_id;
   state.total_supply = total_supply;
   state.metadata = metadata;
-  state.balances.push(new Balance(owner_id.toString(), total_supply));
+  state.balances = [new Balance(owner_id, total_supply)];
 }
 
 @view
@@ -69,12 +79,12 @@ export function ft_balance_of(account_id: AccountId): string {
 export function storage_deposit(account_id: AccountId | null = null): void {
   const account = account_id == null ? near.predecessorAccountId() : account_id.toString();
   if (balanceIndex(account) < 0) {
-    state.balances.push(new Balance(account, U128.zero()));
+    state.balances.push(new Balance(AccountId.fromString(account), UInt128.zero()));
   }
 }
 
 @call({ payable: true })
-export function ft_transfer(receiver_id: AccountId, amount: U128): void {
+export function ft_transfer(receiver_id: AccountId, amount: UInt128): void {
   assertOneYocto();
   const senderIndex = balanceIndex(near.predecessorAccountId());
   const receiverIndex = balanceIndex(receiver_id.toString());
