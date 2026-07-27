@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "near-as build contract.ts --out build/contract.wasm",
-    "test:wasm": "node --test wasm.test.mjs",
-    "test:sandbox": "node --test sandbox.test.mjs",
+    "build": "near-as build src/contract.ts --out build/contract.wasm",
+    "test:wasm": "node --test test/wasm.test.mjs",
+    "test:sandbox": "node --test test/sandbox.test.mjs",
     "test": "npm run build && npm run test:wasm && npm run test:sandbox"
   },
   "dependencies": { "near-sdk-as": "0.1.0-alpha.0" },

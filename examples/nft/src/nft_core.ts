@@ -21,18 +21,15 @@ export function transferCall(
 ): Promise {
   const senderId = near.predecessorAccountId();
   const previous = internalTransfer(senderId, receiverId, tokenId, approvalId, memo);
-  const receiverArgs = new TransferCallArgs();
-  receiverArgs.sender_id = senderId;
-  receiverArgs.previous_owner_id = previous.owner_id;
-  receiverArgs.token_id = tokenId;
-  receiverArgs.msg = msg;
-  const resolveArgs = new ResolveTransferArgs();
-  resolveArgs.authorized_id = senderId == previous.owner_id ? "" : senderId;
-  resolveArgs.previous_owner_id = previous.owner_id;
-  resolveArgs.receiver_id = receiverId;
-  resolveArgs.token_id = tokenId;
-  resolveArgs.approved_account_ids = previous.approved_account_ids;
-  resolveArgs.memo = memo;
+  const receiverArgs = new TransferCallArgs(senderId, previous.owner_id, tokenId, msg);
+  const resolveArgs = new ResolveTransferArgs(
+    senderId == previous.owner_id ? "" : senderId,
+    previous.owner_id,
+    receiverId,
+    tokenId,
+    previous.approved_account_ids,
+    memo,
+  );
   return new Promise(receiverId)
     .callFunction<TransferCallArgs>("nft_on_transfer", receiverArgs, RECEIVER_GAS)
     .then(new Promise(near.currentAccountId()).callFunction<ResolveTransferArgs>("nft_resolve_transfer", resolveArgs, RESOLVE_GAS));

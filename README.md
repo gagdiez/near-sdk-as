@@ -47,13 +47,13 @@ Use ordinary arrays and objects for small state. For data that can grow, import
 the collection namespace and make it an explicit `@contract_state` field:
 
 ```ts
-import { U128 } from "near-sdk-as";
+import { NearToken } from "near-sdk-as";
 import * as collections from "near-sdk-as";
 
 @contract_state
 export class State {
-  balances: collections.LookupMap<string, U128> =
-    new collections.LookupMap<string, U128>();
+  balances: collections.LookupMap<string, NearToken> =
+    new collections.LookupMap<string, NearToken>();
   messages: collections.Vector<Message> = new collections.Vector<Message>();
 }
 ```
@@ -99,7 +99,7 @@ include any auxiliary contracts it needs.
 
 ## Example progression
 
-Functionality will be added only when required by these examples:
+The following examples are included in the `examples/` directory and have full parity with the Rust / TS examples:
 
 1. Hello NEAR ✓
 2. Counter ✓
@@ -111,8 +111,4 @@ Functionality will be added only when required by these examples:
 8. Factory (ordinary contract deployment) ✓
 9. Collections and nested values ✓
 10. NFT (core, approval, enumeration, and transfer-call) ✓
-
-Each port preserves the upstream Rust and TypeScript test scenarios where they
-exist. Additional compiler and `near-sandbox` integration tests extend that baseline.
-
-The old implementation remains in `old-sdk/` only as a parity reference.
+11. Auction ✓

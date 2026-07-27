@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build:receiver": "near-as build test-contracts/token-receiver/contract.ts --out test-contracts/token-receiver/build/contract.wasm",
+    "build:receiver": "near-as build test-contracts/token-receiver/src/contract.ts --out test-contracts/token-receiver/build/contract.wasm",
     "build": "npm run build:receiver && near-as build src/lib.ts --out build/contract.wasm",
-    "test": "npm run build && node --test wasm.test.mjs sandbox.test.mjs"
+    "test": "npm run build && node --test test/wasm.test.mjs test/sandbox.test.mjs"
   },
   "dependencies": { "near-sdk-as": "0.1.0-alpha.0" },
   "devDependencies": {

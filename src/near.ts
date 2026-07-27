@@ -2,15 +2,26 @@ import { fromBytes, readRegister, toBytes } from "./internal/bytes";
 import { host } from "./internal/host";
 import { Gas } from "./gas";
 import { NearToken } from "./near-token";
+import { Timestamp } from "./timestamp";
+import { UInt64 } from "./uint64";
 import { __promiseResult, PromiseResult } from "./promise";
 import { PublicKey } from "./public-key";
 
 const CONTEXT_REGISTER: u64 = 1;
 const HASH_REGISTER: u64 = 2;
+const ONE_YOCTO = NearToken.fromYoctoNear("1");
 
 function readAccount(load: (registerId: u64) => void): string {
   load(CONTEXT_REGISTER);
   return fromBytes(readRegister(CONTEXT_REGISTER)!);
+}
+
+/** Requires exactly one yoctoNEAR, the standard authorization deposit. */
+export function assertOneYocto(): void {
+  assert(
+    near.attachedDeposit().toString() == ONE_YOCTO.toString(),
+    "Requires attached deposit of exactly 1 yoctoNEAR",
+  );
 }
 
 export namespace near {
@@ -35,8 +46,8 @@ export namespace near {
     return host.blockHeight();
   }
 
-  export function blockTimestamp(): u64 {
-    return host.blockTimestamp();
+  export function blockTimestamp(): Timestamp {
+    return UInt64.fromU64(host.blockTimestamp());
   }
 
   export function epochHeight(): u64 {

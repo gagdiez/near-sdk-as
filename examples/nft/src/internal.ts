@@ -1,20 +1,14 @@
-import { JSON, NearToken, near } from "near-sdk-as";
+import { JSON, near } from "near-sdk-as";
 import { transferEvent } from "./events";
 import { Approval, JsonToken, OwnerTokens, Token, TokenId, TokenMetadata } from "./metadata";
 import { state } from "./lib.near.generated";
-
-const ONE_YOCTO = NearToken.fromYoctoNear("1");
-
-export function assertOneYocto(): void {
-  assert(near.attachedDeposit().toString() == ONE_YOCTO.toString(), "Requires attached deposit of exactly 1 yoctoNEAR");
-}
 
 export function assertAtLeastOneYocto(): void {
   assert(!near.attachedDeposit().isZero(), "Requires attached deposit of at least 1 yoctoNEAR");
 }
 
 function ownerTokens(ownerId: string): OwnerTokens {
-  return state.tokens_per_owner.get(ownerId, new OwnerTokens());
+  return state.tokens_per_owner.get(ownerId, new OwnerTokens([]));
 }
 
 function saveOwnerTokens(ownerId: string, tokens: OwnerTokens): void {
@@ -45,12 +39,12 @@ export function approvalObject(values: Approval[]): JSON.Obj | null {
 export function jsonToken(tokenId: TokenId): JsonToken | null {
   if (!state.tokens_by_id.has(tokenId)) return null;
   const token = state.tokens_by_id.getSome(tokenId);
-  const result = new JsonToken();
-  result.token_id = tokenId;
-  result.owner_id = token.owner_id;
-  result.metadata = state.token_metadata_by_id.getSome(tokenId);
-  result.approved_account_ids = approvalObject(token.approved_account_ids);
-  return result;
+  return new JsonToken(
+    tokenId,
+    token.owner_id,
+    state.token_metadata_by_id.getSome(tokenId),
+    approvalObject(token.approved_account_ids),
+  );
 }
 
 export function internalTransfer(
@@ -75,9 +69,7 @@ export function internalTransfer(
   internalAddTokenToOwner(receiverId, tokenId);
 
   const previous = token;
-  const replacement = new Token();
-  replacement.owner_id = receiverId;
-  replacement.next_approval_id = token.next_approval_id;
+  const replacement = new Token(receiverId, [], token.next_approval_id);
   state.tokens_by_id.set(tokenId, replacement);
   transferEvent(previous.owner_id, receiverId, tokenId, senderId == previous.owner_id ? "" : senderId, memo);
   return previous;

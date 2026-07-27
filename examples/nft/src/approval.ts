@@ -1,7 +1,7 @@
 import { Approval, TokenId } from "./metadata";
-import { assertAtLeastOneYocto, assertOneYocto } from "./internal";
+import { assertAtLeastOneYocto } from "./internal";
 import { state } from "./lib.near.generated";
-import { near } from "near-sdk-as";
+import { assertOneYocto, near } from "near-sdk-as";
 
 export function approve(tokenId: TokenId, accountId: string): u64 {
   assertAtLeastOneYocto();

@@ -87,6 +87,7 @@ export async function build(options, cwd = process.cwd()) {
     sourceImport: modulePath(generated, generatedContract),
     sdkImport,
     endpoints,
+    panicOnDefault: contractModule.panicOnDefault,
   });
 
   await mkdir(path.dirname(generated), { recursive: true });

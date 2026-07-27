@@ -4,10 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build:test-contracts": "near-as build test-contracts/hello-near/contract.ts --out test-contracts/hello-near/build/contract.wasm",
-    "build": "npm run build:test-contracts && near-as build contract.ts --out build/contract.wasm",
-    "test:wasm": "node --test wasm.test.mjs",
-    "test:sandbox": "node --test sandbox.test.mjs",
+    "build:test-contracts": "near-as build test-contracts/hello-near/src/contract.ts --out test-contracts/hello-near/build/contract.wasm",
+    "build": "npm run build:test-contracts && near-as build src/contract.ts --out build/contract.wasm",
+    "test:wasm": "node --test test/wasm.test.mjs",
+    "test:sandbox": "node --test test/sandbox.test.mjs",
     "test": "npm run build && npm run test:wasm && npm run test:sandbox"
   },
   "dependencies": { "near-sdk-as": "0.1.0-alpha.0" },

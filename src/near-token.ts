@@ -1,22 +1,22 @@
 import { JSON } from "json-as";
-import { U128 } from "./u128";
+import { UInt128 } from "./uint128";
 
 /** A native NEAR amount represented in yoctoNEAR. */
 @json
 export class NearToken {
-  private constructor(private readonly value: U128) {}
+  private constructor(private readonly value: UInt128) {}
 
   static zero(): NearToken {
-    return new NearToken(U128.zero());
+    return new NearToken(UInt128.zero());
   }
 
   static max(): NearToken {
-    return new NearToken(U128.max());
+    return new NearToken(UInt128.max());
   }
 
   /** Creates an amount from decimal yoctoNEAR. */
   static fromYoctoNear(value: string): NearToken {
-    return new NearToken(U128.fromString(value));
+    return new NearToken(UInt128.fromString(value));
   }
 
   static fromMicroNear(amount: u64): NearToken {
@@ -32,14 +32,14 @@ export class NearToken {
   }
 
   private static fromUnit(amount: u64, unit: string): NearToken {
-    const result = U128.fromString(unit).checkedMulU64(amount);
+    const result = UInt128.fromString(unit).checkedMulU64(amount);
     assert(result != null, "NearToken amount exceeds u128");
     return new NearToken(result!);
   }
 
   /** @internal Creates an amount from the NEAR host ABI representation. */
   static __fromBytes(bytes: Uint8Array): NearToken {
-    return new NearToken(U128.__fromBytes(bytes));
+    return new NearToken(UInt128.__fromBytes(bytes));
   }
 
   @serializer("string")
