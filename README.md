@@ -2,35 +2,66 @@
 
 An experimental, contract-first AssemblyScript SDK for NEAR.
 
-The examples progress from Hello NEAR through an NFT contract, with one root
-state object, generated JSON bindings, and tests against `near-sandbox`.
+The SDK has one root state object, generated JSON bindings, and tests against
+`near-sandbox`. The featured example is a complete basic auction contract.
 
 ## Contract model
 
 ```ts
-import { near } from "near-sdk-as";
+import { AccountId, near, NearToken, Promise, Timestamp } from "near-sdk-as";
 
-@contract_state
+@json
+export class Bid {
+  bidder: AccountId;
+  bid: NearToken;
+
+  constructor(bidder: AccountId, bid: NearToken) {
+    this.bidder = bidder;
+    this.bid = bid;
+  }
+}
+
+@contract_state({ panicOnDefault: true })
 export class State {
-  greeting: string = "Hello";
+  highest_bid!: Bid;
+  auction_end_time!: Timestamp;
+  auctioneer!: AccountId;
+  claimed: bool;
 }
 
-@view
-export function get_greeting(): string {
-  return state.greeting;
+@init
+export function init(end_time: Timestamp, auctioneer: AccountId): void {
+  state.highest_bid = new Bid(
+    AccountId.fromString(near.currentAccountId()),
+    NearToken.fromYoctoNear("1"),
+  );
+  state.auction_end_time = end_time;
+  state.auctioneer = auctioneer;
+  state.claimed = false;
 }
 
-@call
-export function set_greeting(greeting: string): void {
-  near.log("Saving greeting: " + greeting);
-  state.greeting = greeting;
+@call({ payable: true })
+export function bid(): Promise {
+  assert(state.auction_end_time.greaterThan(near.blockTimestamp()), "Auction has ended");
+  const amount = near.attachedDeposit();
+  assert(amount.greaterThan(state.highest_bid.bid), "Bid must be higher");
+
+  const previous = state.highest_bid;
+  state.highest_bid = new Bid(
+    AccountId.fromString(near.predecessorAccountId()),
+    amount,
+  );
+  return new Promise(previous.bidder.toString()).transfer(previous.bid);
 }
 ```
 
 There must be exactly one `@contract_state` class. The build generates the typed
 global `state` value and stores it under one fixed internal key.
 
-- Missing state is initialized with `new State()`.
+- By default, missing state is initialized with `new State()`.
+- `@contract_state({ panicOnDefault: true })` instead rejects every non-init
+  endpoint until an `@init` method has stored state. Use it when a contract has
+  no meaningful default state.
 - `@view` functions never persist state.
 - A successful `@call` persists state once, after the function returns.
 - `@init` persists the initial state and fails if state already exists.
@@ -101,14 +132,14 @@ include any auxiliary contracts it needs.
 
 The following examples are included in the `examples/` directory and have full parity with the Rust / TS examples:
 
-1. Hello NEAR ✓
-2. Counter ✓
-3. Guest book ✓
-4. Donation ✓
-5. Coin flip ✓
-6. Simple cross-contract call ✓
-7. Advanced cross-contract call ✓
-8. Factory (ordinary contract deployment) ✓
-9. Collections and nested values ✓
-10. NFT (core, approval, enumeration, and transfer-call) ✓
-11. Auction ✓
+1. Auction ✓
+2. Hello NEAR ✓
+3. Counter ✓
+4. Guest book ✓
+5. Donation ✓
+6. Coin flip ✓
+7. Simple cross-contract call ✓
+8. Advanced cross-contract call ✓
+9. Factory (ordinary contract deployment) ✓
+10. Collections and nested values ✓
+11. NFT (core, approval, enumeration, and transfer-call) ✓
