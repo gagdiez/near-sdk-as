@@ -1,4 +1,4 @@
-import { AccountId } from "near-sdk-as";
+import { AccountId } from "near-sdk-as/account-id";
 import * as collections from "near-sdk-as";
 
 @json

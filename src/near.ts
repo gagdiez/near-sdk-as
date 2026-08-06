@@ -1,9 +1,9 @@
 import { fromBytes, readRegister, toBytes } from "./internal/bytes";
 import { host } from "./internal/host";
 import { Gas } from "./gas";
-import { NearToken } from "./near-token";
-import { Timestamp } from "./timestamp";
-import { UInt64 } from "./uint64";
+import { NearToken } from "./near-sdk-as/near-token";
+import { Timestamp } from "./near-sdk-as/timestamp";
+import { UInt64 } from "./near-sdk-as/uint64";
 import { __promiseResult, PromiseResult } from "./promise";
 import { PublicKey } from "./public-key";
 

@@ -1,4 +1,5 @@
-import { near, UInt128 } from "near-sdk-as";
+import { near } from "near-sdk-as";
+import { UInt128 } from "near-sdk-as/uint128";
 import { state } from "./contract.near.generated";
 
 export function balanceOf(accountId: string): UInt128 {

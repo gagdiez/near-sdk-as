@@ -1,4 +1,5 @@
-import { NearToken, UInt128 } from "near-sdk-as";
+import { NearToken } from "near-sdk-as/near-token";
+import { UInt128 } from "near-sdk-as/uint128";
 
 @json
 export class FungibleTokenMetadata {

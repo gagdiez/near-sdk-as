@@ -1,4 +1,5 @@
-import { JSON, NearToken } from "near-sdk-as";
+import { JSON } from "near-sdk-as";
+import { NearToken } from "near-sdk-as/near-token";
 
 /**
  * Kept to mirror the tutorial layout. The upstream tutorial leaves payout

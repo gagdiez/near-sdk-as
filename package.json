@@ -7,6 +7,11 @@
   "ascMain": "src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./account-id": "./src/near-sdk-as/account-id.ts",
+    "./near-token": "./src/near-sdk-as/near-token.ts",
+    "./timestamp": "./src/near-sdk-as/timestamp.ts",
+    "./uint128": "./src/near-sdk-as/uint128.ts",
+    "./uint64": "./src/near-sdk-as/uint64.ts",
     "./globals": {
       "types": "./globals.d.ts"
     }
@@ -20,7 +25,6 @@
     "compiler",
     "globals.d.ts",
     "index.ts",
-    "patches",
     "src"
   ],
   "scripts": {
@@ -41,20 +45,18 @@
     "test": "npm run test:compiler && npm run test:contract && npm run test:sandbox",
     "test:compiler": "node --test compiler/endpoints.test.mjs",
     "test:contract": "npm run build && node --test examples/*/test/wasm.test.mjs",
-    "test:sandbox": "npm run build && node --test examples/*/test/sandbox.test.mjs",
-    "postinstall": "patch-package"
+    "test:sandbox": "npm run build && node --test examples/*/test/sandbox.test.mjs"
   },
   "engines": {
     "node": ">=22.22.2"
   },
   "dependencies": {
     "assemblyscript": "0.28.19",
-    "json-as": "1.5.0",
-    "patch-package": "^8.0.0"
+    "json-as": "1.6.0"
   },
   "devDependencies": {
-    "near-api-js": "7.2.0",
-    "near-sandbox": "^0.3.0"
+    "near-api-js": "7.3.0",
+    "near-sandbox": "^0.3.2"
   },
   "overrides": {
     "tar": "7.5.19"

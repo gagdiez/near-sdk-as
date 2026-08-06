@@ -1,6 +1,6 @@
 import { JSON } from "json-as";
 
-/** A syntactically valid NEAR account identifier. */
+/** A syntactically valid NEAR account identifier, serialized as a JSON string. */
 @json
 export class AccountId {
   private constructor(private readonly value: string) {}

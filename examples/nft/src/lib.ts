@@ -1,4 +1,5 @@
-import { AccountId, assertOneYocto, JSON, Promise } from "near-sdk-as";
+import { assertOneYocto, JSON, Promise } from "near-sdk-as";
+import { AccountId } from "near-sdk-as/account-id";
 import * as collections from "near-sdk-as";
 import * as approval from "./approval";
 import * as enumeration from "./enumeration";

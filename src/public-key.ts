@@ -1,4 +1,4 @@
-import { NearToken } from "./near-token";
+import { NearToken } from "./near-sdk-as/near-token";
 
 /** A NEAR public key encoded as the host ABI's curve byte plus key bytes. */
 export class PublicKey {

@@ -55,7 +55,10 @@ ${storeFields.map(({ name, initializer }) => `if (changetype<usize>(state.${name
 ${storeFields.map(({ name }) => `state.${name}.__bind("state.${name}");`).join("\n")}
 `;
 
-  const generatedSource = `import { __loadContract } from ${JSON.stringify(sdkImport)};\n${beforeClass}${contractAndBody}${state}${afterClass}`;
+  const timestampImport = /\bTimestamp\b/.test(source)
+    ? `import { UInt64 } from "near-sdk-as/uint64";\n`
+    : "";
+  const generatedSource = `import { __loadContract } from ${JSON.stringify(sdkImport)};\n${timestampImport}${beforeClass}${contractAndBody}${state}${afterClass}`;
 
   return {
     className,
@@ -73,7 +76,7 @@ function discoverStoreFields(classBody) {
   const fields = [];
   const fieldPattern = /^\s*(?:public\s+)?(?:readonly\s+)?([A-Za-z_$][\w$]*)\s*!?\s*:\s*((?:(?:store|collections)\.)?([A-Za-z_$][\w$]*)(?:<([^;=]+)>)?)(?:\s*=\s*(new\s+(?:(?:store|collections)\.)?([A-Za-z_$][\w$]*)(?:<[^;=()]+>)?\s*\(\s*\)))?\s*;/gm;
   for (const match of classBody.matchAll(fieldPattern)) {
-    const type = match[6];
+    const type = match[3];
     if (!STORE_TYPES.has(type)) continue;
     if (new RegExp(`\\b(${[...STORE_TYPES].join("|")})\\s*(?:<|\\b)`).test(match[4] || "")) {
       throw new Error("Nested scalable collections are not supported");

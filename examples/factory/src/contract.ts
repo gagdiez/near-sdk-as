@@ -1,4 +1,7 @@
-import { AccountId, embed, Gas, JSON, near, NearToken, Promise, UInt128 } from "near-sdk-as";
+import { embed, Gas, JSON, near, Promise } from "near-sdk-as";
+import { AccountId } from "near-sdk-as/account-id";
+import { NearToken } from "near-sdk-as/near-token";
+import { UInt128 } from "near-sdk-as/uint128";
 
 const EXTRA_STORAGE_BYTES: u64 = 10_000;
 const STORAGE_BYTE_COST = NearToken.fromYoctoNear("10000000000000000000");

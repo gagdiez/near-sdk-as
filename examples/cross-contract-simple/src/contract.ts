@@ -1,4 +1,5 @@
-import { AccountId, Gas, near, Promise } from "near-sdk-as";
+import { Gas, near, Promise } from "near-sdk-as";
+import { AccountId } from "near-sdk-as/account-id";
 
 const FIVE_TGAS = Gas.fromTera(5);
 

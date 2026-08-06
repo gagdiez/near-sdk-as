@@ -1,6 +1,6 @@
 import { JSON } from "json-as";
 
-/** An unsigned 64-bit integer represented as a decimal JSON string. */
+/** An unsigned 64-bit integer represented as a JSON decimal string. */
 @json
 export class UInt64 {
   private constructor(private readonly value: u64) {}

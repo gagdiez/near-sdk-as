@@ -1,4 +1,6 @@
-import { AccountId, assertOneYocto, near, UInt128 } from "near-sdk-as";
+import { assertOneYocto, near } from "near-sdk-as";
+import { AccountId } from "near-sdk-as/account-id";
+import { UInt128 } from "near-sdk-as/uint128";
 
 @json
 export class TokenMetadata {

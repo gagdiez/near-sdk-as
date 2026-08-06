@@ -1,4 +1,4 @@
-import { UInt128 } from "near-sdk-as";
+import { UInt128 } from "near-sdk-as/uint128";
 import { jsonToken, ownerTokenIds } from "./internal";
 import { JsonToken } from "./metadata";
 import { state } from "./lib.near.generated";

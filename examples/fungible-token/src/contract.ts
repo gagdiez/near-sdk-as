@@ -1,4 +1,7 @@
-import { AccountId, assertOneYocto, Gas, LookupMap, NearToken, Promise, UInt128, near } from "near-sdk-as";
+import { assertOneYocto, Gas, LookupMap, Promise, near } from "near-sdk-as";
+import { AccountId } from "near-sdk-as/account-id";
+import { NearToken } from "near-sdk-as/near-token";
+import { UInt128 } from "near-sdk-as/uint128";
 import { balanceOf, deposit, isDecimal, min, register, transfer } from "./internal";
 import { FungibleTokenMetadata, ResolveTransferArgs, StorageBalance, StorageBalanceBounds, TransferCallArgs } from "./model";
 

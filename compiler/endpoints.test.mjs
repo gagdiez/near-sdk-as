@@ -36,6 +36,20 @@ test("binds collections to their owning state fields", () => {
   assert.match(generated.source, /state\.events\.__bind\("state\.events"\)/);
 });
 
+test("binds uninitialized collections for panic-on-default state", () => {
+  const generated = generateContractModule(`
+    import * as collections from "near-sdk-as";
+    @contract_state({ panicOnDefault: true })
+    export class State {
+      balances!: collections.LookupMap<string, string>;
+    }
+  `, "near-sdk-as");
+
+  assert.match(generated.source, /@omit\s+balances/);
+  assert.match(generated.source, /state\.balances = new collections\.LookupMap<string, string>\(\)/);
+  assert.match(generated.source, /state\.balances\.__bind\("state\.balances"\)/);
+});
+
 test("rejects nested scalable collections", () => {
   assert.throws(() => generateContractModule(`
     import * as collections from "near-sdk-as";

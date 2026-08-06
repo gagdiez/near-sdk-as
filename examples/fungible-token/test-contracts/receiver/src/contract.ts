@@ -1,4 +1,4 @@
-import { AccountId } from "near-sdk-as";
+import { AccountId } from "near-sdk-as/account-id";
 
 @contract_state
 export class State {}

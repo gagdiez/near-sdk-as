@@ -1,4 +1,4 @@
-/** An unsigned 128-bit integer. NEAR JSON represents this value as a decimal string. */
+/** An unsigned 128-bit integer represented as a JSON decimal string. */
 @json
 export class UInt128 {
   constructor(

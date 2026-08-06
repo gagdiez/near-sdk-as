@@ -1,4 +1,5 @@
-import { AccountId, near } from "near-sdk-as";
+import { near } from "near-sdk-as";
+import { AccountId } from "near-sdk-as/account-id";
 
 @json
 export class PlayerPoints {

@@ -1,7 +1,7 @@
 import { JSON } from "json-as";
 import { UInt128 } from "./uint128";
 
-/** A native NEAR amount represented in yoctoNEAR. */
+/** A native NEAR amount represented as a JSON yoctoNEAR string. */
 @json
 export class NearToken {
   private constructor(private readonly value: UInt128) {}

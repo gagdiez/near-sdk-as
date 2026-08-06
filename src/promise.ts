@@ -1,7 +1,7 @@
 import { JSON } from "json-as";
 import { fromBytes, readRegister, toBytes } from "./internal/bytes";
 import { host } from "./internal/host";
-import { NearToken } from "./near-token";
+import { NearToken } from "./near-sdk-as/near-token";
 import { Gas, GasWeight } from "./gas";
 import { Allowance, PublicKey } from "./public-key";
 

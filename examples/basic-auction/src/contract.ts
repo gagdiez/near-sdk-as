@@ -1,4 +1,7 @@
-import { AccountId, near, NearToken, Promise, Timestamp } from "near-sdk-as";
+import { near, Promise } from "near-sdk-as";
+import { AccountId } from "near-sdk-as/account-id";
+import { NearToken } from "near-sdk-as/near-token";
+import { Timestamp } from "near-sdk-as/timestamp";
 
 @json
 export class Bid {
